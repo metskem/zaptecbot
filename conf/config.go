@@ -22,8 +22,12 @@ var (
 	ChatIDs    = make(map[int]int64)
 	Debug      bool
 
-	Me  tgbotapi.User
-	Bot *tgbotapi.BotAPI
+	Me          tgbotapi.User
+	Bot         *tgbotapi.BotAPI
+	HttpTimeout = 5
+	GetTokenUrl = "https://api.zaptec.com/oauth/token"
+	StateUrl    = "https://api.zaptec.com/api/chargers/%s/state"
+	CachedToken string
 )
 
 func EnvironmentComplete() {

@@ -2,7 +2,9 @@ BINARY=zaptecbot
 
 COMMIT_HASH=`git rev-parse --short=8 HEAD 2>/dev/null`
 BUILD_TIME=`date +%FT%T%z`
-LDFLAGS=-ldflags "-s -w -X github.com/metskem/zaptecbot/conf.CommitHash=${COMMIT_HASH} -X github.com/metskem/zaptecbot/conf.BuildTime=${BUILD_TIME}"
+LDFLAGS=-ldflags "-s -w \
+    -X github.com/metskem/zaptecbot/conf.CommitHash=${COMMIT_HASH} \
+    -X github.com/metskem/zaptecbot/conf.BuildTime=${BUILD_TIME}"
 
 clean:
 	go clean

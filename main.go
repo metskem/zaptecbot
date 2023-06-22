@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
+	"github.com/metskem/zaptecbot/cmds"
 	"github.com/metskem/zaptecbot/conf"
 	"github.com/metskem/zaptecbot/util"
 	"log"
@@ -68,16 +69,16 @@ func main() {
 						if util.IsAuthorized(chat.ID) {
 							HandleCommand(update)
 						} else {
-							util.SendMessage(chat.ID, fmt.Sprintf("sorry, %s is not allowed to send me that command", fromUser))
+							util.SendMessage(chat.ID, fmt.Sprintf("sorry, %s is not allowed to send me that command", fromUser), true)
 						}
 					}
 				}
 
 			}
-			fmt.Println("")
 		}
 	} else {
-		log.Printf("failed getting Bot updatesChannel, error: %v", err)
+		log.Printf(
+			"failed getting Bot updatesChannel, error: %v", err)
 		os.Exit(8)
 	}
 }
@@ -96,7 +97,7 @@ func TalkOrCmdToMe(update tgbotapi.Update) (bool, bool) {
 			}
 			if entity.Type == "bot_command" {
 				botCmd = true
-				if strings.Contains(update.Message.Text, fmt.Sprintf("@%s", conf.Me.UserName)) {
+				if strings.Contains(update.Message.Text, fmt.Sprintf("@%s", conf.Me.UserName)) || update.Message.Chat.Type == "private" {
 					mentioned = true
 				}
 			}
@@ -110,29 +111,15 @@ func TalkOrCmdToMe(update tgbotapi.Update) (bool, bool) {
 }
 
 func HandleCommand(update tgbotapi.Update) {
-	chatId := update.Message.Chat.ID
-	if strings.HasPrefix(update.Message.Text, "/list") {
-		msg := fmt.Sprintf("list requested by %s", update.Message.From.UserName)
-		log.Println(msg)
-		util.SendMessage(chatId, msg)
+	if strings.HasPrefix(update.Message.Text, "/start") {
+		util.SendMessage(update.Message.Chat.ID, fmt.Sprintf("Hi %s (%s %s), the bot admin needs to add the chatId first before you can command me", update.Message.From.UserName, update.Message.From.FirstName, update.Message.From.LastName), false)
 	}
 
-	if strings.HasPrefix(update.Message.Text, "/start") {
-		util.SendMessage(chatId, fmt.Sprintf("Hi %s (%s %s), the bot admin needs to add the chatId first before you can command me", update.Message.From.UserName, update.Message.From.FirstName, update.Message.From.LastName))
+	if strings.HasPrefix(update.Message.Text, "/state") {
+		cmds.State(update)
 	}
 
 	if strings.HasPrefix(update.Message.Text, "/debug") {
-		if strings.Contains(update.Message.Text, " on") {
-			conf.Bot.Debug = true
-			util.SendMessage(chatId, "debug turned on")
-		} else {
-			if strings.Contains(update.Message.Text, " off") {
-				conf.Bot.Debug = false
-				util.SendMessage(chatId, "debug turned off")
-			} else {
-				util.SendMessage(chatId, "please specify /debug on  or  /debug off")
-			}
-		}
+		cmds.Debug(update)
 	}
-
 }
