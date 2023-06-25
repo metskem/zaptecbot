@@ -50,10 +50,12 @@ func Debug(update tgbotapi.Update) {
 	chatId := update.Message.Chat.ID
 	if strings.Contains(update.Message.Text, " on") {
 		conf.Bot.Debug = true
+		conf.Debug = true
 		util.SendMessage(chatId, "debug turned on", true)
 	} else {
 		if strings.Contains(update.Message.Text, " off") {
 			conf.Bot.Debug = false
+			conf.Debug = false
 			util.SendMessage(chatId, "debug turned off", true)
 		} else {
 			util.SendMessage(chatId, "please specify /debug on  or  /debug off", false)
@@ -70,8 +72,18 @@ func ScheduleAdd(update tgbotapi.Update) (schedule model.Schedule) {
 		util.SendMessage(chatId, err.Error(), true)
 		return
 	}
-	conf.ChargeSchedules = append(conf.ChargeSchedules, schedule)
-	util.SendMessage(chatId, fmt.Sprintf("charge schedule (%d) %s added", len(conf.ChargeSchedules), schedule), true)
+	// next is validating if there is overlap with existing schedules
+	overlapExists := false
+	for _, chargeSchedule := range conf.ChargeSchedules {
+		if !(schedule.StartTime.After(chargeSchedule.StartTime.Add(chargeSchedule.ChargeDuration)) || schedule.StartTime.Add(schedule.ChargeDuration).Before(chargeSchedule.StartTime)) {
+			util.SendMessage(chatId, fmt.Sprintf("requested schedule overlaps with existing schedule %s", chargeSchedule.String()), true)
+			overlapExists = true
+		}
+	}
+	if !overlapExists {
+		conf.ChargeSchedules[schedule.Key()] = schedule
+		util.SendMessage(chatId, fmt.Sprintf("charge schedule (%d) %s added", len(conf.ChargeSchedules), schedule.Key()), true)
+	}
 	return
 }
 
@@ -84,17 +96,17 @@ func ScheduleDelete(update tgbotapi.Update) (schedule model.Schedule) {
 		return
 	}
 	scheduleFound := false
-	for ix, chargeSchedule := range conf.ChargeSchedules {
+	for _, chargeSchedule := range conf.ChargeSchedules {
 		if schedule.ChargeDuration == chargeSchedule.ChargeDuration && schedule.StartTime == chargeSchedule.StartTime {
-			conf.ChargeSchedules = append(conf.ChargeSchedules[:ix], conf.ChargeSchedules[ix+1:]...)
+			delete(conf.ChargeSchedules, schedule.Key())
 			scheduleFound = true
 			break
 		}
 	}
 	if scheduleFound {
-		util.SendMessage(chatId, fmt.Sprintf("charge schedule %s deleted, %d schedules left", schedule, len(conf.ChargeSchedules)), true)
+		util.SendMessage(chatId, fmt.Sprintf("charge schedule %s deleted, %d schedules left", schedule.Key(), len(conf.ChargeSchedules)), true)
 	} else {
-		util.SendMessage(chatId, fmt.Sprintf("charge schedule %s not found, %d schedules left", schedule, len(conf.ChargeSchedules)), true)
+		util.SendMessage(chatId, fmt.Sprintf("charge schedule %s not found, %d schedules left", schedule.Key(), len(conf.ChargeSchedules)), true)
 	}
 	return
 }
@@ -103,9 +115,9 @@ func ScheduleList(update tgbotapi.Update) {
 	chatId := update.Message.Chat.ID
 	if len(conf.ChargeSchedules) == 0 {
 		util.SendMessage(chatId, "no charge schedules found", false)
-	}
-	// first validate/parse the given string, we expect "/sd HH:mm n"
-	for ix, chargeSchedule := range conf.ChargeSchedules {
-		util.SendMessage(chatId, fmt.Sprintf("%d - %s", ix, chargeSchedule), true)
+	} else {
+		for _, chargeSchedule := range conf.ChargeSchedules {
+			util.SendMessage(chatId, fmt.Sprintf("startTime: %s, duration: %d hours", chargeSchedule.StartTime.Format("15:04"), int(chargeSchedule.ChargeDuration.Hours())), false)
+		}
 	}
 }

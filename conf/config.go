@@ -4,7 +4,6 @@ import (
 	"fmt"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 	"github.com/metskem/zaptecbot/model"
-	"github.com/robfig/cron/v3"
 	"log"
 	"os"
 	"strconv"
@@ -30,8 +29,7 @@ var (
 	GetTokenUrl     = "https://api.zaptec.com/oauth/token"
 	StateUrl        = "https://api.zaptec.com/api/chargers/%s/state"
 	CachedToken     string
-	ScheduleRunner  *cron.Cron
-	ChargeSchedules []model.Schedule
+	ChargeSchedules = make(map[string]model.Schedule) // key is the schedule time+ duration, i.e.: "12:34 5"
 )
 
 func EnvironmentComplete() {

@@ -44,8 +44,12 @@ func (state ChargerState) String() string {
 type Schedule struct {
 	StartTime      time.Time
 	ChargeDuration time.Duration
+	InProgress     bool
 }
 
 func (schedule Schedule) String() string {
+	return fmt.Sprintf("startTime:%s, duration:%d, inProgress:%t", schedule.StartTime.Format("15:04"), int(schedule.ChargeDuration.Hours()), schedule.InProgress)
+}
+func (schedule Schedule) Key() string {
 	return fmt.Sprintf("%s %d", schedule.StartTime.Format("15:04"), int(schedule.ChargeDuration.Hours()))
 }

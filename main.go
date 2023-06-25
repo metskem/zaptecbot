@@ -6,7 +6,6 @@ import (
 	"github.com/metskem/zaptecbot/cmds"
 	"github.com/metskem/zaptecbot/conf"
 	"github.com/metskem/zaptecbot/util"
-	"github.com/robfig/cron/v3"
 	"log"
 	"os"
 	"strings"
@@ -48,12 +47,29 @@ func main() {
 	updatesChan, err := conf.Bot.GetUpdatesChan(newUpdate)
 	if err == nil {
 
-		// start cron
-		if conf.Debug {
-			conf.ScheduleRunner = cron.New(cron.WithLogger(cron.VerbosePrintfLogger(log.New(os.Stdout, "jobRunner: ", log.Ldate|log.Ltime|log.LUTC))), cron.WithLocation(time.Local))
-		} else {
-			conf.ScheduleRunner = cron.New(cron.WithLocation(time.Local))
-		}
+		// start schedule-handler
+		go func() {
+			for range time.Tick(5 * time.Second) {
+				for _, schedule := range conf.ChargeSchedules {
+					if schedule.StartTime.Before(time.Now()) && schedule.InProgress == false {
+						// TODO do the actual call to start the charger
+						schedule.InProgress = true
+						conf.ChargeSchedules[schedule.Key()] = schedule
+						msg := fmt.Sprintf("schedule \"%s\" started, %d schedules left", schedule.Key(), len(conf.ChargeSchedules))
+						util.Broadcast(msg)
+						log.Println(msg)
+					}
+
+					if schedule.StartTime.Add(schedule.ChargeDuration*time.Hour).Before(time.Now()) && schedule.InProgress == true {
+						// TODO do the actual call to stop the charger
+						delete(conf.ChargeSchedules, schedule.Key()) // delete the schedule
+						msg := fmt.Sprintf("schedule \"%s\" had ended, %d schedules left", schedule.Key(), len(conf.ChargeSchedules))
+						util.Broadcast(msg)
+						log.Println(msg)
+					}
+				}
+			}
+		}()
 
 		// announce that we are live again
 		util.Broadcast(fmt.Sprintf("%s has been (re)started, buildtime: %s", conf.Me.UserName, conf.BuildTime))
