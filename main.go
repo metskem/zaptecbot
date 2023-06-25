@@ -6,9 +6,11 @@ import (
 	"github.com/metskem/zaptecbot/cmds"
 	"github.com/metskem/zaptecbot/conf"
 	"github.com/metskem/zaptecbot/util"
+	"github.com/robfig/cron/v3"
 	"log"
 	"os"
 	"strings"
+	"time"
 )
 
 func main() {
@@ -45,6 +47,13 @@ func main() {
 
 	updatesChan, err := conf.Bot.GetUpdatesChan(newUpdate)
 	if err == nil {
+
+		// start cron
+		if conf.Debug {
+			conf.ScheduleRunner = cron.New(cron.WithLogger(cron.VerbosePrintfLogger(log.New(os.Stdout, "jobRunner: ", log.Ldate|log.Ltime|log.LUTC))), cron.WithLocation(time.Local))
+		} else {
+			conf.ScheduleRunner = cron.New(cron.WithLocation(time.Local))
+		}
 
 		// announce that we are live again
 		util.Broadcast(fmt.Sprintf("%s has been (re)started, buildtime: %s", conf.Me.UserName, conf.BuildTime))
@@ -121,5 +130,17 @@ func HandleCommand(update tgbotapi.Update) {
 
 	if strings.HasPrefix(update.Message.Text, "/debug") {
 		cmds.Debug(update)
+	}
+
+	if strings.HasPrefix(update.Message.Text, "/sa") {
+		cmds.ScheduleAdd(update)
+	}
+
+	if strings.HasPrefix(update.Message.Text, "/sd") {
+		cmds.ScheduleDelete(update)
+	}
+
+	if strings.HasPrefix(update.Message.Text, "/sl") {
+		cmds.ScheduleList(update)
 	}
 }

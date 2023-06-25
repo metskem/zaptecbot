@@ -18,10 +18,20 @@ On startup, you provide the bot with the following envvars:
 
 On startup the bot will first initialize itself with Telegram, and after that it will try to login with the provided username/password, will get an OAuth token and will try to get some basic info from the charger (using the given charger_id).
 
+## Supported Bot Commands
+
+The following commands are supported (and can/should be configured with BotFather (Edit Commands) for convenience):
+```
+state - show the current state of the charger
+debug - [on|off] - dynamically turn Telegram Bot debugging on/off
+sl - (Schedule List) list the current schedules
+sa - (Schedule Add) HH:mm n - Add a schedule, H=Hours, m=minutes, n=duration in hours. When the given time is before current time, we add one day (assuming you wanted that time for tomorrow)
+sd - (Schedule Delete) HH:mm n - Delete a schedule, H=Hours, m=minutes, n=duration in hours. 
+``` 
 
 ## TODO
 * How to authenticate (give it some authorized telegram accountids in an envvar?)
 * Do we want to persist schedules, so they survive a bot restart?
 * Should the bot notify when a schedule starts/stops? (I think it will then need some data to persist, like the subscriber chatid's)
 * When adding a schedule, it should check for overlap with existing schedules.
-* 
+

@@ -3,6 +3,8 @@ package conf
 import (
 	"fmt"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
+	"github.com/metskem/zaptecbot/model"
+	"github.com/robfig/cron/v3"
 	"log"
 	"os"
 	"strconv"
@@ -22,12 +24,14 @@ var (
 	ChatIDs    = make(map[int]int64)
 	Debug      bool
 
-	Me          tgbotapi.User
-	Bot         *tgbotapi.BotAPI
-	HttpTimeout = 5
-	GetTokenUrl = "https://api.zaptec.com/oauth/token"
-	StateUrl    = "https://api.zaptec.com/api/chargers/%s/state"
-	CachedToken string
+	Me              tgbotapi.User
+	Bot             *tgbotapi.BotAPI
+	HttpTimeout     = 5
+	GetTokenUrl     = "https://api.zaptec.com/oauth/token"
+	StateUrl        = "https://api.zaptec.com/api/chargers/%s/state"
+	CachedToken     string
+	ScheduleRunner  *cron.Cron
+	ChargeSchedules []model.Schedule
 )
 
 func EnvironmentComplete() {

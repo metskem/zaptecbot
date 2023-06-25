@@ -1,6 +1,9 @@
-package types
+package model
 
-import "fmt"
+import (
+	"fmt"
+	"time"
+)
 
 type LoginResponse struct {
 	AccessToken string `json:"access_token"`
@@ -36,4 +39,13 @@ type ChargerState struct {
 func (state ChargerState) String() string {
 	return fmt.Sprintf("CommunicationMode:%s, PermanentCableLock:%s, Humidity:%s, TemperatureInternal5:%s, VoltagePhase1:%s, VoltagePhase2:%s, VoltagePhase3:%s, CurrentPhase1:%s, CurrentPhase2:%s, CurrentPhase3:%s, PhaseRotation:%s, ChargeMode:%s, ChargerOperationMode:%s",
 		state.CommunicationMode, state.PermanentCableLock, state.Humidity, state.TemperatureInternal5, state.VoltagePhase1, state.VoltagePhase2, state.VoltagePhase3, state.CurrentPhase1, state.CurrentPhase2, state.CurrentPhase3, state.PhaseRotation, state.ChargeMode, state.ChargerOperationMode)
+}
+
+type Schedule struct {
+	StartTime      time.Time
+	ChargeDuration time.Duration
+}
+
+func (schedule Schedule) String() string {
+	return fmt.Sprintf("%s %d", schedule.StartTime.Format("15:04"), int(schedule.ChargeDuration.Hours()))
 }

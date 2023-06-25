@@ -5,7 +5,7 @@ import (
 	"fmt"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 	"github.com/metskem/zaptecbot/conf"
-	"github.com/metskem/zaptecbot/types"
+	"github.com/metskem/zaptecbot/model"
 	"github.com/metskem/zaptecbot/util"
 	"io"
 	"log"
@@ -29,7 +29,7 @@ func State(update tgbotapi.Update) {
 			if err == nil && resp != nil {
 				respBody, _ := io.ReadAll(resp.Body)
 				if resp.StatusCode == http.StatusOK {
-					stateResponse := types.ChargerStatesRaw{}
+					stateResponse := model.ChargerStatesRaw{}
 					if err := json.Unmarshal(respBody, &stateResponse); err != nil {
 						log.Printf("failed to decode the charger state response: %s\n", err)
 					}
@@ -60,4 +60,52 @@ func Debug(update tgbotapi.Update) {
 		}
 	}
 
+}
+
+func ScheduleAdd(update tgbotapi.Update) (schedule model.Schedule) {
+	var err error
+	chatId := update.Message.Chat.ID
+	// first validate/parse the given string, we expect "/sa HH:mm n"
+	if schedule, err = util.ValidateSchedule(update.Message.Text); err != nil {
+		util.SendMessage(chatId, err.Error(), true)
+		return
+	}
+	conf.ChargeSchedules = append(conf.ChargeSchedules, schedule)
+	util.SendMessage(chatId, fmt.Sprintf("charge schedule (%d) %s added", len(conf.ChargeSchedules), schedule), true)
+	return
+}
+
+func ScheduleDelete(update tgbotapi.Update) (schedule model.Schedule) {
+	var err error
+	chatId := update.Message.Chat.ID
+	// first validate/parse the given string, we expect "/sd HH:mm n"
+	if schedule, err = util.ValidateSchedule(update.Message.Text); err != nil {
+		util.SendMessage(chatId, err.Error(), true)
+		return
+	}
+	scheduleFound := false
+	for ix, chargeSchedule := range conf.ChargeSchedules {
+		if schedule.ChargeDuration == chargeSchedule.ChargeDuration && schedule.StartTime == chargeSchedule.StartTime {
+			conf.ChargeSchedules = append(conf.ChargeSchedules[:ix], conf.ChargeSchedules[ix+1:]...)
+			scheduleFound = true
+			break
+		}
+	}
+	if scheduleFound {
+		util.SendMessage(chatId, fmt.Sprintf("charge schedule %s deleted, %d schedules left", schedule, len(conf.ChargeSchedules)), true)
+	} else {
+		util.SendMessage(chatId, fmt.Sprintf("charge schedule %s not found, %d schedules left", schedule, len(conf.ChargeSchedules)), true)
+	}
+	return
+}
+
+func ScheduleList(update tgbotapi.Update) {
+	chatId := update.Message.Chat.ID
+	if len(conf.ChargeSchedules) == 0 {
+		util.SendMessage(chatId, "no charge schedules found", false)
+	}
+	// first validate/parse the given string, we expect "/sd HH:mm n"
+	for ix, chargeSchedule := range conf.ChargeSchedules {
+		util.SendMessage(chatId, fmt.Sprintf("%d - %s", ix, chargeSchedule), true)
+	}
 }

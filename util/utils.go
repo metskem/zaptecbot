@@ -2,15 +2,18 @@ package util
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/metskem/zaptecbot/conf"
-	"github.com/metskem/zaptecbot/types"
+	"github.com/metskem/zaptecbot/model"
 	"io"
 	"log"
 	"net/http"
 	"net/url"
+	"regexp"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -62,7 +65,7 @@ func GetToken() string {
 		if err == nil && resp != nil {
 			respBody, _ := io.ReadAll(resp.Body)
 			if resp.StatusCode == http.StatusOK {
-				loginResponse := types.LoginResponse{}
+				loginResponse := model.LoginResponse{}
 				if err := json.Unmarshal(respBody, &loginResponse); err != nil {
 					log.Printf("failed to decode the login response: %s\n", err)
 				}
@@ -80,8 +83,8 @@ func GetToken() string {
 	return ""
 }
 
-func ParseChargerState(rawStates types.ChargerStatesRaw) types.ChargerState {
-	chargerState := types.ChargerState{}
+func ParseChargerState(rawStates model.ChargerStatesRaw) model.ChargerState {
+	chargerState := model.ChargerState{}
 	for _, rawState := range rawStates {
 		switch rawState.StateID {
 		case 150:
@@ -113,4 +116,37 @@ func ParseChargerState(rawStates types.ChargerStatesRaw) types.ChargerState {
 		}
 	}
 	return chargerState
+}
+
+func ValidateSchedule(updateText string) (schedule model.Schedule, err error) {
+	schedRegex := regexp.MustCompile("^/s[ad] \\d{2}:\\d{2} \\d{1,2}.*")
+	if !schedRegex.MatchString(updateText) {
+		return schedule, errors.New(fmt.Sprintf("failed to parse schedule %s", updateText))
+	}
+	words := strings.Split(updateText, " ")
+	if len(words) != 3 {
+		return schedule, errors.New(fmt.Sprintf("failed to parse request, we expected 3 words, but got %d", len(words)))
+	}
+
+	now := time.Now()
+	//we add the current year/month/day
+	parsedTime := fmt.Sprintf("%d-%d-%d %s:%s", now.Year(), now.Month(), now.Day(), strings.Split(words[1], ":")[0], strings.Split(words[1], ":")[1])
+	if schedule.StartTime, err = time.ParseInLocation("2006-1-2 15:04", parsedTime, now.Location()); err != nil {
+		return schedule, errors.New(fmt.Sprintf("failed to parse time %s: %s", words[1], err))
+	}
+
+	// when you request a time that is less than current time, we assume that you meant that time for tomorrow:
+	if schedule.StartTime.Before(now) {
+		schedule.StartTime = schedule.StartTime.Add(time.Hour * 24)
+	}
+
+	var duration int
+	if duration, err = strconv.Atoi(words[2]); err != nil {
+		return schedule, errors.New(fmt.Sprintf("failed to parse duration %s: %s", words[2], err))
+	}
+	if duration <= 0 || duration > 24 {
+		return schedule, errors.New(fmt.Sprintf("duration %d is <0 or >24 hours", duration))
+	}
+	schedule.ChargeDuration = time.Duration(duration) * time.Hour
+	return
 }
