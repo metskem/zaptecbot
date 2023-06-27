@@ -52,7 +52,7 @@ func main() {
 			for range time.Tick(5 * time.Second) {
 				for _, schedule := range conf.ChargeSchedules {
 					if schedule.StartTime.Before(time.Now()) && schedule.InProgress == false {
-						// TODO do the actual call to start the charger
+						cmds.StartStopCharger("start")
 						schedule.InProgress = true
 						conf.ChargeSchedules[schedule.Key()] = schedule
 						msg := fmt.Sprintf("schedule \"%s\" started, %d schedules left", schedule.Key(), len(conf.ChargeSchedules))
@@ -61,7 +61,7 @@ func main() {
 					}
 
 					if schedule.StartTime.Add(schedule.ChargeDuration).Before(time.Now()) && schedule.InProgress == true {
-						// TODO do the actual call to stop the charger
+						cmds.StartStopCharger("stop")
 						delete(conf.ChargeSchedules, schedule.Key()) // delete the schedule
 						msg := fmt.Sprintf("schedule \"%s\" has ended, %d schedules left", schedule.Key(), len(conf.ChargeSchedules))
 						util.Broadcast(msg)

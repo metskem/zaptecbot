@@ -20,11 +20,11 @@ func TestParseChargerState(t *testing.T) {
 		{ChargerID: "fake charger id", StateID: 509, ValueAsString: "s509"},
 		{ChargerID: "fake charger id", StateID: 548, ValueAsString: "s548"},
 		{ChargerID: "fake charger id", StateID: 702, ValueAsString: "s702"},
-		{ChargerID: "fake charger id", StateID: 710, ValueAsString: "s710"},
+		{ChargerID: "fake charger id", StateID: 710, ValueAsString: "3"},
 	}
 	state := ParseChargerState(rawStates)
 	//t.Log(state)
-	expectedState := "CommunicationMode:s150, PermanentCableLock:s151, Humidity:s270, TemperatureInternal5:s201, VoltagePhase1:s501, VoltagePhase2:s502, VoltagePhase3:s503, CurrentPhase1:s507, CurrentPhase2:s508, CurrentPhase3:s509, PhaseRotation:s548, ChargeMode:s702, ChargerOperationMode:s710"
+	expectedState := "CommunicationMode:s150, PermanentCableLock:s151, Humidity:s270, TemperatureInternal5:s201, VoltagePhase1:s501, VoltagePhase2:s502, VoltagePhase3:s503, CurrentPhase1:s507, CurrentPhase2:s508, CurrentPhase3:s509, PhaseRotation:s548, ChargeMode:s702, ChargerOperationMode:Connected_Charging"
 	{
 		if fmt.Sprintf("%s", state) != expectedState {
 			t.Errorf("unexpected state (expected / actual) : \n%s\n%s\n", expectedState, state)
@@ -35,14 +35,14 @@ func TestParseChargerState(t *testing.T) {
 func TestValidateScheduleAdd(t *testing.T) {
 	validStrings := []string{"/sa 12:34 5", "/sa 12:34 15"}
 	for _, testString := range validStrings {
-		if _, err := ValidateSchedule(testString); err != nil {
+		if _, err := ParseSchedule(testString); err != nil {
 			t.Errorf(err.Error())
 		}
 	}
 	invalidStrings := []string{"/sa 12:34 xx", "/sa 12:34 ", "/sa 12:3a 1", "/sa  12:34 9", "/sa 25:12 1", "/sa 12:34 0", "/sa 12:34 99"}
 	for _, testString := range invalidStrings {
-		if _, err := ValidateSchedule(testString); err == nil {
-			t.Errorf("ValidateSchedule should have failed for \"%s\"", testString)
+		if _, err := ParseSchedule(testString); err == nil {
+			t.Errorf("ParseSchedule should have failed for \"%s\"", testString)
 		}
 	}
 }

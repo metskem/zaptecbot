@@ -23,13 +23,14 @@ var (
 	ChatIDs    = make(map[int]int64)
 	Debug      bool
 
-	Me              tgbotapi.User
-	Bot             *tgbotapi.BotAPI
-	HttpTimeout     = 5
-	GetTokenUrl     = "https://api.zaptec.com/oauth/token"
-	StateUrl        = "https://api.zaptec.com/api/chargers/%s/state"
-	CachedToken     string
-	ChargeSchedules = make(map[string]model.Schedule) // key is the schedule time+ duration, i.e.: "12:34 5"
+	Me                   tgbotapi.User
+	Bot                  *tgbotapi.BotAPI
+	HttpTimeout          = 5
+	GetTokenUrl          = "https://api.zaptec.com/oauth/token"
+	StateUrl             = "https://api.zaptec.com/api/chargers/%s/state"
+	StopStartChargingUrl = "https://api.zaptec.com/api/chargers/%s/sendCommand/%d"
+	CachedToken          string
+	ChargeSchedules      = make(map[string]model.Schedule) // key is the schedule time+ duration, i.e.: "12:34 5"
 )
 
 func EnvironmentComplete() {

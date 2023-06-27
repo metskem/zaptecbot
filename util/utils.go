@@ -21,7 +21,7 @@ import (
 // Broadcast -send message to all admins
 func Broadcast(message string) {
 	for _, chat := range conf.ChatIDs {
-		SendMessage(chat, message, true)
+		SendMessage(chat, message, false)
 	}
 }
 
@@ -112,13 +112,24 @@ func ParseChargerState(rawStates model.ChargerStatesRaw) model.ChargerState {
 		case 702:
 			chargerState.ChargeMode = rawState.ValueAsString
 		case 710:
-			chargerState.ChargerOperationMode = rawState.ValueAsString
+			switch rawState.ValueAsString {
+			case "0":
+				chargerState.ChargerOperationMode = model.ChargerOperationMode0
+			case "1":
+				chargerState.ChargerOperationMode = model.ChargerOperationMode1
+			case "2":
+				chargerState.ChargerOperationMode = model.ChargerOperationMode2
+			case "3":
+				chargerState.ChargerOperationMode = model.ChargerOperationMode3
+			case "5":
+				chargerState.ChargerOperationMode = model.ChargerOperationMode5
+			}
 		}
 	}
 	return chargerState
 }
 
-func ValidateSchedule(updateText string) (schedule model.Schedule, err error) {
+func ParseSchedule(updateText string) (schedule model.Schedule, err error) {
 	schedRegex := regexp.MustCompile("^/s[ad] \\d{2}:\\d{2} \\d{1,2}.*")
 	if !schedRegex.MatchString(updateText) {
 		return schedule, errors.New(fmt.Sprintf("failed to parse schedule %s", updateText))

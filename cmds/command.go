@@ -28,6 +28,7 @@ func State(update tgbotapi.Update) {
 			resp, err := client.Do(req)
 			if err == nil && resp != nil {
 				respBody, _ := io.ReadAll(resp.Body)
+				defer func() { _ = resp.Body.Close() }()
 				if resp.StatusCode == http.StatusOK {
 					stateResponse := model.ChargerStatesRaw{}
 					if err := json.Unmarshal(respBody, &stateResponse); err != nil {
@@ -35,12 +36,44 @@ func State(update tgbotapi.Update) {
 					}
 					chargerState := util.ParseChargerState(stateResponse)
 					util.SendMessage(update.Message.Chat.ID, fmt.Sprintf("%s", chargerState), false)
-					_ = resp.Body.Close()
 				} else {
 					log.Printf("response (%d) from charge state failed:%s\n", resp.StatusCode, respBody)
 				}
 			} else {
 				log.Printf("response from charger state failed:%s\n", err)
+			}
+		}
+	}
+}
+
+func StartStopCharger(cmd string) {
+	var cmdCode int
+	switch cmd {
+	case "start":
+		cmdCode = 507
+	case "stop":
+		cmdCode = 506
+	}
+	if jwToken := util.GetToken(); jwToken != "" {
+		transport := http.Transport{IdleConnTimeout: time.Second}
+		client := http.Client{Timeout: time.Duration(conf.HttpTimeout) * time.Second, Transport: &transport}
+		if req, err := http.NewRequest(http.MethodPost, fmt.Sprintf(conf.StopStartChargingUrl, conf.ChargerId, cmdCode), nil); err != nil {
+			log.Printf("failed to create http request: %s\n", err)
+		} else {
+			req.Header = map[string][]string{"Accept": {"*/*"}, "Authorization": {fmt.Sprintf("bearer %s", jwToken)}}
+			resp, err := client.Do(req)
+			if err == nil && resp != nil {
+				respBody, _ := io.ReadAll(resp.Body)
+				defer func() { _ = resp.Body.Close() }()
+				if resp.StatusCode == http.StatusOK {
+					_ = resp.Body.Close()
+					log.Printf("%s charger succeeded", cmd)
+					return
+				} else {
+					util.Broadcast(fmt.Sprintf("failed to %s charger, %d response was returned: %s", cmd, resp.StatusCode, respBody))
+				}
+			} else {
+				util.Broadcast(fmt.Sprintf("failed to %s charger: %s", cmd, err))
 			}
 		}
 	}
@@ -68,7 +101,7 @@ func ScheduleAdd(update tgbotapi.Update) (schedule model.Schedule) {
 	var err error
 	chatId := update.Message.Chat.ID
 	// first validate/parse the given string, we expect "/sa HH:mm n"
-	if schedule, err = util.ValidateSchedule(update.Message.Text); err != nil {
+	if schedule, err = util.ParseSchedule(update.Message.Text); err != nil {
 		util.SendMessage(chatId, err.Error(), true)
 		return
 	}
@@ -91,7 +124,7 @@ func ScheduleDelete(update tgbotapi.Update) (schedule model.Schedule) {
 	var err error
 	chatId := update.Message.Chat.ID
 	// first validate/parse the given string, we expect "/sd HH:mm n"
-	if schedule, err = util.ValidateSchedule(update.Message.Text); err != nil {
+	if schedule, err = util.ParseSchedule(update.Message.Text); err != nil {
 		util.SendMessage(chatId, err.Error(), true)
 		return
 	}
@@ -118,7 +151,7 @@ func ScheduleList(update tgbotapi.Update) {
 	} else {
 		var msg string
 		for _, chargeSchedule := range conf.ChargeSchedules {
-			msg = fmt.Sprintf("%sstartTime: %s, duration: %d hours\n", msg, chargeSchedule.StartTime.Format("15:04"), int(chargeSchedule.ChargeDuration.Hours()))
+			msg = fmt.Sprintf("%sstart: %s, duration: %d hours\n", msg, chargeSchedule.StartTime.Format("2006-01-02T15:04Z07:00"), int(chargeSchedule.ChargeDuration.Hours()))
 		}
 		util.SendMessage(chatId, msg, false)
 	}

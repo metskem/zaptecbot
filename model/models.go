@@ -31,10 +31,19 @@ type ChargerState struct {
 	CurrentPhase1        string // 507
 	CurrentPhase2        string // 508
 	CurrentPhase3        string // 509
+	TotalChargePower     string // 513
 	PhaseRotation        string // 548
 	ChargeMode           string // 702
 	ChargerOperationMode string // 710
 }
+
+var (
+	ChargerOperationMode0 = "Unknown"
+	ChargerOperationMode1 = "Disconnected"
+	ChargerOperationMode2 = "Connected_Requesting"
+	ChargerOperationMode3 = "Connected_Charging"
+	ChargerOperationMode5 = "Connected_Finished"
+)
 
 func (state ChargerState) String() string {
 	return fmt.Sprintf("CommunicationMode:%s, PermanentCableLock:%s, Humidity:%s, TemperatureInternal5:%s, VoltagePhase1:%s, VoltagePhase2:%s, VoltagePhase3:%s, CurrentPhase1:%s, CurrentPhase2:%s, CurrentPhase3:%s, PhaseRotation:%s, ChargeMode:%s, ChargerOperationMode:%s",
