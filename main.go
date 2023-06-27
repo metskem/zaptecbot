@@ -55,7 +55,7 @@ func main() {
 						cmds.StartStopCharger("start")
 						schedule.InProgress = true
 						conf.ChargeSchedules[schedule.Key()] = schedule
-						msg := fmt.Sprintf("schedule \"%s\" started, %d schedules left", schedule.Key(), len(conf.ChargeSchedules))
+						msg := fmt.Sprintf("schedule \"%s\" started", schedule.Key())
 						util.Broadcast(msg)
 						log.Println(msg)
 					}
