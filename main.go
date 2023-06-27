@@ -60,10 +60,10 @@ func main() {
 						log.Println(msg)
 					}
 
-					if schedule.StartTime.Add(schedule.ChargeDuration*time.Hour).Before(time.Now()) && schedule.InProgress == true {
+					if schedule.StartTime.Add(schedule.ChargeDuration).Before(time.Now()) && schedule.InProgress == true {
 						// TODO do the actual call to stop the charger
 						delete(conf.ChargeSchedules, schedule.Key()) // delete the schedule
-						msg := fmt.Sprintf("schedule \"%s\" had ended, %d schedules left", schedule.Key(), len(conf.ChargeSchedules))
+						msg := fmt.Sprintf("schedule \"%s\" has ended, %d schedules left", schedule.Key(), len(conf.ChargeSchedules))
 						util.Broadcast(msg)
 						log.Println(msg)
 					}

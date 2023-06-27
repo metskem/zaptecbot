@@ -116,8 +116,10 @@ func ScheduleList(update tgbotapi.Update) {
 	if len(conf.ChargeSchedules) == 0 {
 		util.SendMessage(chatId, "no charge schedules found", false)
 	} else {
+		var msg string
 		for _, chargeSchedule := range conf.ChargeSchedules {
-			util.SendMessage(chatId, fmt.Sprintf("startTime: %s, duration: %d hours", chargeSchedule.StartTime.Format("15:04"), int(chargeSchedule.ChargeDuration.Hours())), false)
+			msg = fmt.Sprintf("%sstartTime: %s, duration: %d hours\n", msg, chargeSchedule.StartTime.Format("15:04"), int(chargeSchedule.ChargeDuration.Hours()))
 		}
+		util.SendMessage(chatId, msg, false)
 	}
 }
