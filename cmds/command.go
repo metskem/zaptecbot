@@ -130,7 +130,6 @@ func ScheduleDelete(update tgbotapi.Update) (schedule model.Schedule) {
 	}
 	scheduleFound := false
 	for _, chargeSchedule := range conf.ChargeSchedules {
-		fmt.Printf("DEBUG: schedule.StartTime: %v  /  chargeSchedule.StartTime: %v\n", schedule.StartTime, chargeSchedule.StartTime)
 		// when deleting a schedule, we don't specify the day (only hours/mins), we should also be able to delete schedules that are already running, so we try both the given time and the given time minus 24 hours
 		if (schedule.ChargeDuration == chargeSchedule.ChargeDuration && schedule.StartTime == chargeSchedule.StartTime) || (schedule.ChargeDuration == chargeSchedule.ChargeDuration && schedule.StartTime.Add(-24*time.Hour) == chargeSchedule.StartTime) {
 			delete(conf.ChargeSchedules, schedule.Key())
