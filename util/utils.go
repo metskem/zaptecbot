@@ -130,18 +130,28 @@ func ParseChargerState(rawStates model.ChargerStatesRaw) model.ChargerState {
 }
 
 func ParseSchedule(updateText string) (schedule model.Schedule, err error) {
-	schedRegex := regexp.MustCompile("^/s[ad] \\d{2}:\\d{2} \\d{1,2}.*")
-	if !schedRegex.MatchString(updateText) {
-		return schedule, errors.New(fmt.Sprintf("failed to parse schedule %s", updateText))
-	}
+	var durationStr, parsedTime string
 	words := strings.Split(updateText, " ")
-	if len(words) != 3 {
-		return schedule, errors.New(fmt.Sprintf("failed to parse request, we expected 3 words, but got %d", len(words)))
+	now := time.Now()
+	schedRegex := regexp.MustCompile(conf.SchedulePattern1)
+	if !schedRegex.MatchString(updateText) {
+		schedRegex = regexp.MustCompile(conf.SchedulePattern2)
+		if !schedRegex.MatchString(updateText) {
+			return schedule, errors.New(fmt.Sprintf("failed to parse schedule %s", updateText))
+		} else {
+			parsedTime = words[1] + " " + words[2]
+			durationStr = words[3]
+		}
+	} else {
+		//we add the current year/month/day
+		parsedTime = fmt.Sprintf("%d-%d-%d %s", now.Year(), now.Month(), now.Day(), words[1])
+		durationStr = words[2]
 	}
 
-	now := time.Now()
-	//we add the current year/month/day
-	parsedTime := fmt.Sprintf("%d-%d-%d %s:%s", now.Year(), now.Month(), now.Day(), strings.Split(words[1], ":")[0], strings.Split(words[1], ":")[1])
+	if len(words) != 3 && len(words) != 4 {
+		return schedule, errors.New(fmt.Sprintf("failed to parse request, we expected 3 or 4 words, but got %d", len(words)))
+	}
+
 	if schedule.StartTime, err = time.ParseInLocation("2006-1-2 15:04", parsedTime, now.Location()); err != nil {
 		return schedule, errors.New(fmt.Sprintf("failed to parse time %s: %s", words[1], err))
 	}
@@ -152,8 +162,8 @@ func ParseSchedule(updateText string) (schedule model.Schedule, err error) {
 	}
 
 	var duration int
-	if duration, err = strconv.Atoi(words[2]); err != nil {
-		return schedule, errors.New(fmt.Sprintf("failed to parse duration %s: %s", words[2], err))
+	if duration, err = strconv.Atoi(durationStr); err != nil {
+		return schedule, errors.New(fmt.Sprintf("failed to parse duration %s: %s", durationStr, err))
 	}
 	if duration <= 0 || duration > 24 {
 		return schedule, errors.New(fmt.Sprintf("duration %d is <0 or >24 hours", duration))

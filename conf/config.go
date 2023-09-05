@@ -10,6 +10,11 @@ import (
 	"strings"
 )
 
+const (
+	SchedulePattern1 = "^/s[ad] \\d{2}:\\d{2} \\d{1,2}.*"                          // /s[ad] 12:34 5
+	SchedulePattern2 = "^/s[ad] \\d{4}\\-\\d{2}\\-\\d{2} \\d{2}:\\d{2} \\d{1,2}.*" // /s[ad] 2021-01-01 12:34 5
+)
+
 var (
 	CommitHash string
 	BuildTime  string
