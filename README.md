@@ -6,8 +6,7 @@ This bot allows to:
 * add a charging schedule (datetime+duration)
 * list existing schedules
 * delete a schedule
-* start charging
-* stop/pause charging
+* list the current state of the charger
 
 On startup, you provide the bot with the following envvars:
 * BOT_TOKEN - The Telegram bot token
