@@ -50,7 +50,7 @@ var (
 )
 
 func (state ChargerState) String() string {
-	return fmt.Sprintf("CommunicationMode: %s\nPermanentCableLock: %s\nHumidity: %s\nTemperatureInternal5: %s\nPhase1: %sV (%sA)\nPhase2: %sV (%sA)\nPhase3: %sV (%sA)\nPhaseRotation: %s\nChargeMode: %s\nChargerOperationMode: %s\nChargerMaxCurrent: %s\nMainboardVersion: %s\nComputerVersion: %s\nSourceVersion: %s",
+	return fmt.Sprintf("CommunicationMode: %s\nPermanentCableLock: %s\nHumidity: %s\nTemperatureInternal5: %s\nPhase1: %sV (%sA)\nPhase2: %sV (%sA)\nPhase3: %sV (%sA)\nPhaseRotation: %s\nChargeMode: %s\nChargerOperationMode: %s\nChargerMaxCurrent: %sA\nMainboardVersion: %s\nComputerVersion: %s\nSourceVersion: %s",
 		state.CommunicationMode, state.PermanentCableLock, state.Humidity, state.TemperatureInternal5, state.VoltagePhase1, state.CurrentPhase1, state.VoltagePhase2, state.CurrentPhase2, state.VoltagePhase3, state.CurrentPhase3, state.PhaseRotation, state.ChargeMode, state.ChargerOperationMode, state.ChargerMaxCurrent, state.MainboardVersion, state.ComputerVersion, state.SourceVersion)
 }
 

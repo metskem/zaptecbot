@@ -108,9 +108,9 @@ func ParseChargerState(rawStates model.ChargerStatesRaw) model.ChargerState {
 		case 509:
 			chargerState.CurrentPhase3 = rawState.ValueAsString
 		case 510:
-			chargerState.CurrentPhase3 = rawState.ValueAsString
-		case 548:
 			chargerState.ChargerMaxCurrent = rawState.ValueAsString
+		case 548:
+			chargerState.PhaseRotation = rawState.ValueAsString
 		case 702:
 			chargerState.ChargeMode = rawState.ValueAsString
 		case 710:
