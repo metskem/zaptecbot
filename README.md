@@ -18,7 +18,7 @@ On startup, you provide the bot with the following envvars:
 On startup the bot will first initialize itself with Telegram, and after that it will try to login with the provided username/password, will get an OAuth token and will try to get some basic info from the charger (using the given charger_id).
 
 ### TimeZones
-Since a Telegram client does not send it's timezone information to the bot, and we don't want to ask the clients for their timezone, you might have to set the TZ envvar (i.e. "Europe/Amsterdam") in order to allow the clients their local timezone.
+Since a Telegram client does not send its timezone information to the bot, and we don't want to ask the clients for their timezone, you might have to set the TZ envvar (i.e. "Europe/Amsterdam") in order to allow the clients their local timezone.
 
 ## Supported Bot Commands
 

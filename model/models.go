@@ -31,10 +31,14 @@ type ChargerState struct {
 	CurrentPhase1        string // 507
 	CurrentPhase2        string // 508
 	CurrentPhase3        string // 509
+	ChargerMaxCurrent    string // 510
 	TotalChargePower     string // 513
 	PhaseRotation        string // 548
 	ChargeMode           string // 702
 	ChargerOperationMode string // 710
+	MainboardVersion     string // 708
+	ComputerVersion      string // 911
+	SourceVersion        string // 916
 }
 
 var (
@@ -46,8 +50,8 @@ var (
 )
 
 func (state ChargerState) String() string {
-	return fmt.Sprintf("CommunicationMode:%s, PermanentCableLock:%s, Humidity:%s, TemperatureInternal5:%s, VoltagePhase1:%s, VoltagePhase2:%s, VoltagePhase3:%s, CurrentPhase1:%s, CurrentPhase2:%s, CurrentPhase3:%s, PhaseRotation:%s, ChargeMode:%s, ChargerOperationMode:%s",
-		state.CommunicationMode, state.PermanentCableLock, state.Humidity, state.TemperatureInternal5, state.VoltagePhase1, state.VoltagePhase2, state.VoltagePhase3, state.CurrentPhase1, state.CurrentPhase2, state.CurrentPhase3, state.PhaseRotation, state.ChargeMode, state.ChargerOperationMode)
+	return fmt.Sprintf("CommunicationMode: %s\nPermanentCableLock: %s\nHumidity: %s\nTemperatureInternal5: %s\nPhase1: %sV (%sA)\nPhase2: %sV (%sA)\nPhase3: %sV (%sA)\nPhaseRotation: %s\nChargeMode: %s\nChargerOperationMode: %s\nChargerMaxCurrent: %s\nMainboardVersion: %s\nComputerVersion: %s\nSourceVersion: %s",
+		state.CommunicationMode, state.PermanentCableLock, state.Humidity, state.TemperatureInternal5, state.VoltagePhase1, state.CurrentPhase1, state.VoltagePhase2, state.CurrentPhase2, state.VoltagePhase3, state.CurrentPhase3, state.PhaseRotation, state.ChargeMode, state.ChargerOperationMode, state.ChargerMaxCurrent, state.MainboardVersion, state.ComputerVersion, state.SourceVersion)
 }
 
 type Schedule struct {
