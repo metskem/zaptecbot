@@ -152,7 +152,7 @@ func ScheduleList(update tgbotapi.Update) {
 	} else {
 		var msg string
 		for _, chargeSchedule := range conf.ChargeSchedules {
-			msg = fmt.Sprintf("%sstart: %s, duration: %d hours\n", msg, chargeSchedule.StartTime.Format("2006-01-02T15:04Z07:00"), int(chargeSchedule.ChargeDuration.Hours()))
+			msg = fmt.Sprintf("%s%s: %d hours\n", msg, chargeSchedule.StartTime.Format("2006-01-02T15:04Z07:00"), int(chargeSchedule.ChargeDuration.Hours()))
 		}
 		util.SendMessage(chatId, msg, false)
 	}
