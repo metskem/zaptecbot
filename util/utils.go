@@ -126,6 +126,8 @@ func ParseChargerState(rawStates model.ChargerStatesRaw) model.ChargerState {
 			case "5":
 				chargerState.ChargerOperationMode = model.ChargerOperationMode5
 			}
+		case 712:
+			chargerState.StandAlone = rawState.ValueAsString
 		case 908:
 			chargerState.MainboardVersion = rawState.ValueAsString
 		case 911:
