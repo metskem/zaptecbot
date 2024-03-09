@@ -21,13 +21,18 @@ func TestParseChargerState(t *testing.T) {
 		{ChargerID: "fake charger id", StateID: 548, ValueAsString: "s548"},
 		{ChargerID: "fake charger id", StateID: 702, ValueAsString: "s702"},
 		{ChargerID: "fake charger id", StateID: 710, ValueAsString: "3"},
+		{ChargerID: "fake charger id", StateID: 712, ValueAsString: "s712"},
+		{ChargerID: "fake charger id", StateID: 510, ValueAsString: "s510"},
+		{ChargerID: "fake charger id", StateID: 908, ValueAsString: "s908"},
+		{ChargerID: "fake charger id", StateID: 911, ValueAsString: "s911"},
+		{ChargerID: "fake charger id", StateID: 916, ValueAsString: "s916"},
 	}
 	state := ParseChargerState(rawStates)
 	//t.Log(state)
-	expectedState := "CommunicationMode:s150, PermanentCableLock:s151, Humidity:s270, TemperatureInternal5:s201, VoltagePhase1:s501, VoltagePhase2:s502, VoltagePhase3:s503, CurrentPhase1:s507, CurrentPhase2:s508, CurrentPhase3:s509, PhaseRotation:s548, ChargeMode:s702, ChargerOperationMode:Connected_Charging"
+	expectedState := "CommunicationMode: s150\nPermanentCableLock: s151\nHumidity: s270\nTemperatureInternal5: s201\nPhase1: s501V (s507A)\nPhase2: s502V (s508A)\nPhase3: s503V (s509A)\nPhaseRotation: s548\nChargeMode: s702\nChargerOperationMode: Connected_Charging\nIsStandAlone: s712\nChargerMaxCurrent: s510A\nMainboardVersion: s908\nComputerVersion: s911\nSourceVersion: s916"
 	{
 		if fmt.Sprintf("%s", state) != expectedState {
-			t.Errorf("unexpected state (expected / actual) : \n%s\n%s\n", expectedState, state)
+			t.Errorf("unexpected state (expected / actual) : \n%s\n\n\n%s\n", expectedState, state)
 		}
 	}
 }
