@@ -507,7 +507,7 @@ curl -vsk -X POST -H "Accept: */*" -H "Authorization: bearer $TOKEN" https://api
 Where cmdCodes are (https://api.zaptec.com/help/index.html#/Charger/post_api_chargers__id__sendCommand__commandId_):
 102   - restart charger
 200   - upgrade firmware
-506   - stop/pause chargeer
+506   - stop/pause charger
 507   - resume charging
 10001 - deauthorize and stop charging
 
