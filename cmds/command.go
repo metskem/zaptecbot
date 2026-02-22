@@ -60,20 +60,24 @@ func StartStopCharger(cmd string) {
 		if req, err := http.NewRequest(http.MethodPost, fmt.Sprintf(conf.StopStartChargingUrl, conf.ChargerId, cmdCode), nil); err != nil {
 			log.Printf("failed to create http request: %s\n", err)
 		} else {
-			req.Header = map[string][]string{"Accept": {"*/*"}, "Authorization": {fmt.Sprintf("bearer %s", jwToken)}}
-			resp, err := client.Do(req)
-			if err == nil && resp != nil {
-				respBody, _ := io.ReadAll(resp.Body)
-				defer func() { _ = resp.Body.Close() }()
-				if resp.StatusCode == http.StatusOK {
-					_ = resp.Body.Close()
-					log.Printf("%s charger succeeded", cmd)
-					return
+			maxAttempts := 5
+			for attempt := 0; attempt < maxAttempts; attempt++ {
+				req.Header = map[string][]string{"Accept": {"*/*"}, "Authorization": {fmt.Sprintf("bearer %s", jwToken)}}
+				resp, err := client.Do(req)
+				if err == nil && resp != nil {
+					respBody, _ := io.ReadAll(resp.Body)
+					defer func() { _ = resp.Body.Close() }()
+					if resp.StatusCode == http.StatusOK {
+						_ = resp.Body.Close()
+						log.Printf("%s charger succeeded", cmd)
+						return
+					} else {
+						util.Broadcast(fmt.Sprintf("(attempt %d) failed to %s charger, %d response was returned: %s", attempt, cmd, resp.StatusCode, respBody))
+					}
 				} else {
-					util.Broadcast(fmt.Sprintf("failed to %s charger, %d response was returned: %s", cmd, resp.StatusCode, respBody))
+					util.Broadcast(fmt.Sprintf("(attempt %d) failed to %s charger: %s", attempt, cmd, err))
 				}
-			} else {
-				util.Broadcast(fmt.Sprintf("failed to %s charger: %s", cmd, err))
+				time.Sleep(5 * time.Duration(attempt) * time.Second)
 			}
 		}
 	}
