@@ -75,9 +75,11 @@ func GetToken() string {
 				return loginResponse.AccessToken
 			} else {
 				log.Printf("response (%d) from login failed:%s\n", resp.StatusCode, respBody)
+				Broadcast(fmt.Sprintf("response (%d) from login failed:%s\n", resp.StatusCode, respBody))
 			}
 		} else {
 			log.Printf("response from login failed:%s\n", err)
+			Broadcast(fmt.Sprintf("response from login failed:%s\n", err))
 		}
 	}
 	return ""

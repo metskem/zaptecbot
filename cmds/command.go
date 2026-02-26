@@ -38,9 +38,11 @@ func State(update tgbotapi.Update) {
 					util.SendMessage(update.Message.Chat.ID, fmt.Sprintf("%s", chargerState), false)
 				} else {
 					log.Printf("response (%d) from charge state failed:%s\n", resp.StatusCode, respBody)
+					util.Broadcast(fmt.Sprintf("response (%d) from charge state failed:%s\n", resp.StatusCode, respBody))
 				}
 			} else {
 				log.Printf("response from charger state failed:%s\n", err)
+				util.Broadcast(fmt.Sprintf("response from charger state failed:%s\n", err))
 			}
 		}
 	}

@@ -30,7 +30,7 @@ var (
 
 	Me                   tgbotapi.User
 	Bot                  *tgbotapi.BotAPI
-	HttpTimeout          = 5
+	HttpTimeout          = 15
 	GetTokenUrl          = "https://api.zaptec.com/oauth/token"
 	StateUrl             = "https://api.zaptec.com/api/chargers/%s/state"
 	StopStartChargingUrl = "https://api.zaptec.com/api/chargers/%s/sendCommand/%d"
