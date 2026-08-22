@@ -4,10 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
-	"github.com/golang-jwt/jwt/v4"
-	"github.com/metskem/zaptecbot/conf"
-	"github.com/metskem/zaptecbot/model"
 	"io"
 	"log"
 	"net/http"
@@ -16,6 +12,11 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
+	"github.com/golang-jwt/jwt/v4"
+	"github.com/metskem/zaptecbot/conf"
+	"github.com/metskem/zaptecbot/model"
 )
 
 // Broadcast -send message to all admins
@@ -63,6 +64,7 @@ func GetToken() string {
 		postData := fmt.Sprintf("grant_type=password&username=%s&password=%s", userEscaped, passwordEscaped)
 		resp, err := client.Post(conf.GetTokenUrl, "application/x-www-form-urlencoded", strings.NewReader(postData))
 		if err == nil && resp != nil {
+			defer func() { _ = resp.Body.Close() }()
 			respBody, _ := io.ReadAll(resp.Body)
 			if resp.StatusCode == http.StatusOK {
 				loginResponse := model.LoginResponse{}
@@ -70,8 +72,7 @@ func GetToken() string {
 					log.Printf("failed to decode the login response: %s\n", err)
 				}
 				conf.CachedToken = loginResponse.AccessToken
-				log.Printf("succesfull login, token will expire in %d hours\n", loginResponse.ExpiresIn/3600)
-				_ = resp.Body.Close()
+				log.Printf("successful login, token will expire in %d hours\n", loginResponse.ExpiresIn/3600)
 				return loginResponse.AccessToken
 			} else {
 				log.Printf("response (%d) from login failed:%s\n", resp.StatusCode, respBody)
@@ -118,15 +119,15 @@ func ParseChargerState(rawStates model.ChargerStatesRaw) model.ChargerState {
 		case 710:
 			switch rawState.ValueAsString {
 			case "0":
-				chargerState.ChargerOperationMode = model.ChargerOperationMode0
+				chargerState.ChargerOperationMode = model.ChargerOperationModeUnknown
 			case "1":
-				chargerState.ChargerOperationMode = model.ChargerOperationMode1
+				chargerState.ChargerOperationMode = model.ChargerOperationModeDisconnected
 			case "2":
-				chargerState.ChargerOperationMode = model.ChargerOperationMode2
+				chargerState.ChargerOperationMode = model.ChargerOperationModeConnected_Requesting
 			case "3":
-				chargerState.ChargerOperationMode = model.ChargerOperationMode3
+				chargerState.ChargerOperationMode = model.ChargerOperationModeConnected_Charging
 			case "5":
-				chargerState.ChargerOperationMode = model.ChargerOperationMode5
+				chargerState.ChargerOperationMode = model.ChargerOperationModeConnected_Finished
 			}
 		case 712:
 			chargerState.StandAlone = rawState.ValueAsString

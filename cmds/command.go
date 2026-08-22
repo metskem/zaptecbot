@@ -3,49 +3,57 @@ package cmds
 import (
 	"encoding/json"
 	"fmt"
-	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
-	"github.com/metskem/zaptecbot/conf"
-	"github.com/metskem/zaptecbot/model"
-	"github.com/metskem/zaptecbot/util"
 	"io"
 	"log"
 	"net/http"
 	"strings"
 	"time"
+
+	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
+	"github.com/metskem/zaptecbot/conf"
+	"github.com/metskem/zaptecbot/model"
+	"github.com/metskem/zaptecbot/util"
 )
 
-func State(update tgbotapi.Update) {
-	//msg := fmt.Sprintf("list requested by %s", update.Message.From.UserName)
-	//log.Println(msg)
-	//util.SendMessage(update.Message.Chat.ID, msg, false)
-	if jwToken := util.GetToken(); jwToken != "" {
-		transport := http.Transport{IdleConnTimeout: time.Second}
-		client := http.Client{Timeout: time.Duration(conf.HttpTimeout) * time.Second, Transport: &transport}
-		if req, err := http.NewRequest(http.MethodGet, fmt.Sprintf(conf.StateUrl, conf.ChargerId), nil); err != nil {
-			log.Printf("failed to create http request: %s\n", err)
-		} else {
-			req.Header = map[string][]string{"Accept": {"*/*"}, "Authorization": {fmt.Sprintf("bearer %s", jwToken)}}
-			resp, err := client.Do(req)
-			if err == nil && resp != nil {
-				respBody, _ := io.ReadAll(resp.Body)
-				defer func() { _ = resp.Body.Close() }()
-				if resp.StatusCode == http.StatusOK {
-					stateResponse := model.ChargerStatesRaw{}
-					if err := json.Unmarshal(respBody, &stateResponse); err != nil {
-						log.Printf("failed to decode the charger state response: %s\n", err)
-					}
-					chargerState := util.ParseChargerState(stateResponse)
-					util.SendMessage(update.Message.Chat.ID, fmt.Sprintf("%s", chargerState), false)
-				} else {
-					log.Printf("response (%d) from charge state failed:%s\n", resp.StatusCode, respBody)
-					util.Broadcast(fmt.Sprintf("response (%d) from charge state failed:%s\n", resp.StatusCode, respBody))
-				}
-			} else {
-				log.Printf("response from charger state failed:%s\n", err)
-				util.Broadcast(fmt.Sprintf("response from charger state failed:%s\n", err))
-			}
-		}
+func ChargerState() (model.ChargerState, error) {
+	jwToken := util.GetToken()
+	if jwToken == "" {
+		return model.ChargerState{}, fmt.Errorf("failed to get token")
 	}
+	transport := http.Transport{IdleConnTimeout: time.Second}
+	client := http.Client{Timeout: time.Duration(conf.HttpTimeout) * time.Second, Transport: &transport}
+	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf(conf.StateUrl, conf.ChargerId), nil)
+	if err != nil {
+		return model.ChargerState{}, fmt.Errorf("failed to create http request: %s", err)
+	}
+	req.Header = map[string][]string{"Accept": {"*/*"}, "Authorization": {fmt.Sprintf("bearer %s", jwToken)}}
+	resp, err := client.Do(req)
+	if err != nil {
+		return model.ChargerState{}, fmt.Errorf("response from charger state failed: %s", err)
+	}
+	if resp != nil {
+		respBody, _ := io.ReadAll(resp.Body)
+		defer func() { _ = resp.Body.Close() }()
+		if resp.StatusCode == http.StatusOK {
+			stateResponse := model.ChargerStatesRaw{}
+			if err := json.Unmarshal(respBody, &stateResponse); err != nil {
+				return model.ChargerState{}, fmt.Errorf("failed to decode the charger state response: %s", err)
+			}
+			return util.ParseChargerState(stateResponse), nil
+		}
+		return model.ChargerState{}, fmt.Errorf("response (%d) from charge state failed: %s", resp.StatusCode, respBody)
+	}
+	return model.ChargerState{}, fmt.Errorf("response from charger state was nil")
+}
+
+func ShowState(update tgbotapi.Update) {
+	chargerState, err := ChargerState()
+	if err != nil {
+		log.Println(err)
+		util.Broadcast(err.Error())
+		return
+	}
+	util.SendMessage(update.Message.Chat.ID, fmt.Sprintf("%s", chargerState), false)
 }
 
 func StartStopCharger(cmd string) {
@@ -56,6 +64,33 @@ func StartStopCharger(cmd string) {
 	case "stop":
 		cmdCode = 506
 	}
+
+	// Check current charger state before proceeding
+	chargerState, err := ChargerState()
+	if err != nil {
+		msg := fmt.Sprintf("failed to get charger state before %s command: %s", cmd, err)
+		log.Println(msg)
+		util.Broadcast(msg)
+		return
+	}
+	currentMode := chargerState.ChargerOperationMode
+	log.Printf("charger current operation mode: %s (requested command: %s)", currentMode, cmd)
+
+	if cmd == "start" && currentMode == model.ChargerOperationModeConnected_Charging {
+		msg := fmt.Sprintf("charger is already in %s mode, not sending start command", currentMode)
+		log.Println(msg)
+		util.Broadcast(msg)
+		return
+	}
+	if cmd == "stop" && currentMode != model.ChargerOperationModeConnected_Charging {
+		msg := fmt.Sprintf("charger is in %s mode (not charging), not sending stop command", currentMode)
+		log.Println(msg)
+		util.Broadcast(msg)
+		return
+	}
+
+	util.Broadcast(fmt.Sprintf("charger is in %s mode, sending %s command", currentMode, cmd))
+
 	if jwToken := util.GetToken(); jwToken != "" {
 		transport := http.Transport{IdleConnTimeout: time.Second}
 		client := http.Client{Timeout: time.Duration(conf.HttpTimeout) * time.Second, Transport: &transport}
@@ -63,7 +98,7 @@ func StartStopCharger(cmd string) {
 			log.Printf("failed to create http request: %s\n", err)
 		} else {
 			maxAttempts := 5
-			for attempt := 0; attempt < maxAttempts; attempt++ {
+			for attempt := range maxAttempts {
 				req.Header = map[string][]string{"Accept": {"*/*"}, "Authorization": {fmt.Sprintf("bearer %s", jwToken)}}
 				resp, err := client.Do(req)
 				if err == nil && resp != nil {
@@ -73,9 +108,8 @@ func StartStopCharger(cmd string) {
 						_ = resp.Body.Close()
 						log.Printf("%s charger succeeded", cmd)
 						return
-					} else {
-						util.Broadcast(fmt.Sprintf("(attempt %d) failed to %s charger, %d response was returned: %s", attempt, cmd, resp.StatusCode, respBody))
 					}
+					util.Broadcast(fmt.Sprintf("(attempt %d) failed to %s charger, %d response was returned: %s", attempt, cmd, resp.StatusCode, respBody))
 				} else {
 					util.Broadcast(fmt.Sprintf("(attempt %d) failed to %s charger: %s", attempt, cmd, err))
 				}

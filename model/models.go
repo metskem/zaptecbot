@@ -43,11 +43,11 @@ type ChargerState struct {
 }
 
 var (
-	ChargerOperationMode0 = "Unknown"
-	ChargerOperationMode1 = "Disconnected"
-	ChargerOperationMode2 = "Connected_Requesting"
-	ChargerOperationMode3 = "Connected_Charging"
-	ChargerOperationMode5 = "Connected_Finished"
+	ChargerOperationModeUnknown              = "Unknown"
+	ChargerOperationModeDisconnected         = "Disconnected"
+	ChargerOperationModeConnected_Requesting = "Connected_Requesting"
+	ChargerOperationModeConnected_Charging   = "Connected_Charging"
+	ChargerOperationModeConnected_Finished   = "Connected_Finished"
 )
 
 func (state ChargerState) String() string {

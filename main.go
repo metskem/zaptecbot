@@ -2,14 +2,15 @@ package main
 
 import (
 	"fmt"
-	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
-	"github.com/metskem/zaptecbot/cmds"
-	"github.com/metskem/zaptecbot/conf"
-	"github.com/metskem/zaptecbot/util"
 	"log"
 	"os"
 	"strings"
 	"time"
+
+	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
+	"github.com/metskem/zaptecbot/cmds"
+	"github.com/metskem/zaptecbot/conf"
+	"github.com/metskem/zaptecbot/util"
 )
 
 func main() {
@@ -141,7 +142,7 @@ func HandleCommand(update tgbotapi.Update) {
 	}
 
 	if strings.HasPrefix(update.Message.Text, "/state") {
-		cmds.State(update)
+		cmds.ShowState(update)
 	}
 
 	if strings.HasPrefix(update.Message.Text, "/debug") {
