@@ -11,6 +11,64 @@ type LoginResponse struct {
 	ExpiresIn   int    `json:"expires_in"`
 }
 
+type InstallationDetails struct {
+	ID                                         string  `json:"Id"`
+	Name                                       string  `json:"Name"`
+	Address                                    string  `json:"Address"`
+	ZipCode                                    string  `json:"ZipCode"`
+	City                                       string  `json:"City"`
+	CountryID                                  string  `json:"CountryId"`
+	InstallationType                           int     `json:"InstallationType"`
+	MaxCurrent                                 int     `json:"MaxCurrent"`
+	AvailableCurrent                           int     `json:"AvailableCurrent"`
+	AvailableCurrentPhase1                     int     `json:"AvailableCurrentPhase1"`
+	AvailableCurrentPhase2                     int     `json:"AvailableCurrentPhase2"`
+	AvailableCurrentPhase3                     int     `json:"AvailableCurrentPhase3"`
+	AvailableCurrentMode                       int     `json:"AvailableCurrentMode"`
+	AvailableCurrentScheduleWeekendActive      bool    `json:"AvailableCurrentScheduleWeekendActive"`
+	DefaultThreeToOneSwitchCurrent             int     `json:"DefaultThreeToOneSwitchCurrent"`
+	InstallationCategoryID                     string  `json:"InstallationCategoryId"`
+	InstallationCategory                       string  `json:"InstallationCategory"`
+	UseLoadBalancing                           bool    `json:"UseLoadBalancing"`
+	IsRequiredAuthentication                   bool    `json:"IsRequiredAuthentication"`
+	Latitude                                   float64 `json:"Latitude"`
+	Longitude                                  float64 `json:"Longitude"`
+	Active                                     bool    `json:"Active"`
+	NetworkType                                int     `json:"NetworkType"`
+	AvailableInternetAccessPLC                 bool    `json:"AvailableInternetAccessPLC"`
+	AvailableInternetAccessWiFi                bool    `json:"AvailableInternetAccessWiFi"`
+	CreatedOnDate                              string  `json:"CreatedOnDate"`
+	UpdatedOn                                  string  `json:"UpdatedOn"`
+	CurrentUserRoles                           int     `json:"CurrentUserRoles"`
+	AuthenticationType                         int     `json:"AuthenticationType"`
+	MessagingEnabled                           bool    `json:"MessagingEnabled"`
+	RoutingID                                  string  `json:"RoutingId"`
+	OcppCloudURLVersion                        int     `json:"OcppCloudUrlVersion"`
+	TimeZoneName                               string  `json:"TimeZoneName"`
+	TimeZoneIanaName                           string  `json:"TimeZoneIanaName"`
+	IsSubscriptionsAvailableForCurrentUser     bool    `json:"IsSubscriptionsAvailableForCurrentUser"`
+	AvailableFeatures                          int     `json:"AvailableFeatures"`
+	EnabledFeatures                            int     `json:"EnabledFeatures"`
+	ActiveChargerCount                         int     `json:"ActiveChargerCount"`
+	FeaturePowerManagementEcoModeDepartureTime int     `json:"Feature_PowerManagement_EcoMode_DepartureTime"`
+	FeaturePowerManagementEcoModeMinEnergy     int     `json:"Feature_PowerManagement_EcoMode_MinEnergy"`
+	FeaturePowerManagementEcoModeDeliveryArea  int     `json:"Feature_PowerManagement_EcoMode_DeliveryArea"`
+	PropertyIsMinimumPowerOfflineMode          bool    `json:"PropertyIsMinimumPowerOfflineMode"`
+	PropertyOfflineModeAllowAnonymous          bool    `json:"PropertyOfflineModeAllowAnonymous"`
+	PropertyEnergySensorRippleEnabled          bool    `json:"PropertyEnergySensorRippleEnabled"`
+	PropertyEnergySensorRippleNumBits          int     `json:"PropertyEnergySensorRippleNumBits"`
+	Tic                                        struct {
+		Enabled bool `json:"Enabled"`
+	} `json:"Tic"`
+	SurplusMode struct {
+		Active   bool `json:"Active"`
+		Strategy int  `json:"Strategy"`
+	} `json:"SurplusMode"`
+	PropertyFirmwareAutomaticUpdates    bool `json:"PropertyFirmwareAutomaticUpdates"`
+	PropertyMaxSinglePhaseChargeCurrent int  `json:"PropertyMaxSinglePhaseChargeCurrent"`
+	PropertySessionMaxStopCount         int  `json:"PropertySessionMaxStopCount"`
+}
+
 type ChargerStatesRaw []ChargerStateRaw
 
 type ChargerStateRaw struct {
@@ -43,16 +101,20 @@ type ChargerState struct {
 }
 
 var (
-	ChargerOperationModeUnknown              = "Unknown"
-	ChargerOperationModeDisconnected         = "Disconnected"
-	ChargerOperationModeConnected_Requesting = "Connected_Requesting"
-	ChargerOperationModeConnected_Charging   = "Connected_Charging"
-	ChargerOperationModeConnected_Finished   = "Connected_Finished"
+	ChargerOperationModeUnknown             = "Unknown"
+	ChargerOperationModeDisconnected        = "Disconnected"
+	ChargeroperationmodeconnectedRequesting = "Connected_Requesting"
+	ChargeroperationmodeconnectedCharging   = "Connected_Charging"
+	ChargeroperationmodeconnectedFinished   = "Connected_Finished"
 )
 
 func (state ChargerState) String() string {
 	return fmt.Sprintf("CommunicationMode: %s\nPermanentCableLock: %s\nHumidity: %s\nTemperatureInternal5: %s\nPhase1: %sV (%sA)\nPhase2: %sV (%sA)\nPhase3: %sV (%sA)\nPhaseRotation: %s\nChargeMode: %s\nChargerOperationMode: %s\nIsStandAlone: %s\nChargerMaxCurrent: %sA\nMainboardVersion: %s\nComputerVersion: %s\nSourceVersion: %s",
 		state.CommunicationMode, state.PermanentCableLock, state.Humidity, state.TemperatureInternal5, state.VoltagePhase1, state.CurrentPhase1, state.VoltagePhase2, state.CurrentPhase2, state.VoltagePhase3, state.CurrentPhase3, state.PhaseRotation, state.ChargeMode, state.ChargerOperationMode, state.StandAlone, state.ChargerMaxCurrent, state.MainboardVersion, state.ComputerVersion, state.SourceVersion)
+}
+
+func (detail InstallationDetails) String() string {
+	return fmt.Sprintf("Active: %t\nMaxCurrent:%d\nAvailableCurrent:%d", detail.Active, detail.MaxCurrent, detail.AvailableCurrent)
 }
 
 type Schedule struct {

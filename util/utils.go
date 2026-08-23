@@ -123,11 +123,11 @@ func ParseChargerState(rawStates model.ChargerStatesRaw) model.ChargerState {
 			case "1":
 				chargerState.ChargerOperationMode = model.ChargerOperationModeDisconnected
 			case "2":
-				chargerState.ChargerOperationMode = model.ChargerOperationModeConnected_Requesting
+				chargerState.ChargerOperationMode = model.ChargeroperationmodeconnectedRequesting
 			case "3":
-				chargerState.ChargerOperationMode = model.ChargerOperationModeConnected_Charging
+				chargerState.ChargerOperationMode = model.ChargeroperationmodeconnectedCharging
 			case "5":
-				chargerState.ChargerOperationMode = model.ChargerOperationModeConnected_Finished
+				chargerState.ChargerOperationMode = model.ChargeroperationmodeconnectedFinished
 			}
 		case 712:
 			chargerState.StandAlone = rawState.ValueAsString

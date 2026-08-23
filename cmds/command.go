@@ -2,6 +2,7 @@ package cmds
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -22,7 +23,7 @@ func ChargerState() (model.ChargerState, error) {
 	}
 	transport := http.Transport{IdleConnTimeout: time.Second}
 	client := http.Client{Timeout: time.Duration(conf.HttpTimeout) * time.Second, Transport: &transport}
-	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf(conf.StateUrl, conf.ChargerId), nil)
+	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf(conf.ChargerStateUrl, conf.ChargerId), nil)
 	if err != nil {
 		return model.ChargerState{}, fmt.Errorf("failed to create http request: %s", err)
 	}
@@ -46,6 +47,70 @@ func ChargerState() (model.ChargerState, error) {
 	return model.ChargerState{}, fmt.Errorf("response from charger state was nil")
 }
 
+func InstallationDetails() (model.InstallationDetails, error) {
+	jwToken := util.GetToken()
+	if jwToken == "" {
+		return model.InstallationDetails{}, fmt.Errorf("failed to get token")
+	}
+	transport := http.Transport{IdleConnTimeout: time.Second}
+	client := http.Client{Timeout: time.Duration(conf.HttpTimeout) * time.Second, Transport: &transport}
+	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf(conf.InstallationDetailsUrl, conf.ChargerId), nil)
+	if err != nil {
+		return model.InstallationDetails{}, fmt.Errorf("failed to create http request: %s", err)
+	}
+	req.Header = map[string][]string{"Accept": {"*/*"}, "Authorization": {fmt.Sprintf("bearer %s", jwToken)}}
+	resp, err := client.Do(req)
+	if err != nil {
+		return model.InstallationDetails{}, fmt.Errorf("response from installation details failed: %s", err)
+	}
+	if resp != nil {
+		respBody, _ := io.ReadAll(resp.Body)
+		defer func() { _ = resp.Body.Close() }()
+		if resp.StatusCode == http.StatusOK {
+			detailsResponse := model.InstallationDetails{}
+			if err := json.Unmarshal(respBody, &detailsResponse); err != nil {
+				return model.InstallationDetails{}, fmt.Errorf("failed to decode the installation details response: %s", err)
+			}
+		}
+		return model.InstallationDetails{}, fmt.Errorf("response (%d) from installation details failed: %s", resp.StatusCode, respBody)
+	}
+	return model.InstallationDetails{}, fmt.Errorf("response from installation details was nil")
+}
+
+// TODO er moet nog een TG command voor komen die dit aanroept, iets van /setmaxcurrentHigh /setmaxcurrentLow
+func InstallationSetMaxCurrent(maxCurrent int) error {
+	jwToken := util.GetToken()
+	if jwToken == "" {
+		return fmt.Errorf("failed to get token")
+	}
+	installationDetails, err := InstallationDetails()
+	if err != nil {
+		return fmt.Errorf("failed to get charger details: %s", err)
+	}
+
+	transport := http.Transport{IdleConnTimeout: time.Second}
+	client := http.Client{Timeout: time.Duration(conf.HttpTimeout) * time.Second, Transport: &transport}
+	body := strings.NewReader(fmt.Sprintf(`{"maxCurrent":%d,"availableCurrent":%d}`, maxCurrent, maxCurrent))
+	req, err := http.NewRequest(http.MethodPost, fmt.Sprintf(conf.InstallationUpdateUrl, installationDetails.ID), body)
+	if err != nil {
+		return fmt.Errorf("failed to create http request: %s", err)
+	}
+	req.Header = map[string][]string{"Accept": {"*/*"}, "Content-Type": {"application/json"}, "Authorization": {fmt.Sprintf("bearer %s", jwToken)}}
+	resp, err := client.Do(req)
+	if err != nil {
+		return fmt.Errorf("response from installation SetMaxCurrent failed: %s", err)
+	}
+	if resp != nil {
+		respBody, _ := io.ReadAll(resp.Body)
+		defer func() { _ = resp.Body.Close() }()
+		if resp != nil && resp.StatusCode == http.StatusOK {
+			return nil
+		}
+		return fmt.Errorf("response (%d) from installation SetMaxCurrent failed: %s", resp.StatusCode, respBody)
+	}
+	return errors.New("response from installation SetMaxCurrent failed, nil response")
+}
+
 func ShowState(update tgbotapi.Update) {
 	chargerState, err := ChargerState()
 	if err != nil {
@@ -53,7 +118,13 @@ func ShowState(update tgbotapi.Update) {
 		util.Broadcast(err.Error())
 		return
 	}
-	util.SendMessage(update.Message.Chat.ID, fmt.Sprintf("%s", chargerState), false)
+	chargerDetails, err := InstallationDetails()
+	if err != nil {
+		log.Println(err)
+		util.Broadcast(err.Error())
+		return
+	}
+	util.SendMessage(update.Message.Chat.ID, fmt.Sprintf("%s%s", chargerState, chargerDetails), false)
 }
 
 func StartStopCharger(cmd string) {
@@ -76,13 +147,13 @@ func StartStopCharger(cmd string) {
 	currentMode := chargerState.ChargerOperationMode
 	log.Printf("charger current operation mode: %s (requested command: %s)", currentMode, cmd)
 
-	if cmd == "start" && currentMode == model.ChargerOperationModeConnected_Charging {
+	if cmd == "start" && currentMode == model.ChargeroperationmodeconnectedCharging {
 		msg := fmt.Sprintf("charger is already in %s mode, not sending start command", currentMode)
 		log.Println(msg)
 		util.Broadcast(msg)
 		return
 	}
-	if cmd == "stop" && currentMode != model.ChargerOperationModeConnected_Charging {
+	if cmd == "stop" && currentMode != model.ChargeroperationmodeconnectedCharging {
 		msg := fmt.Sprintf("charger is in %s mode (not charging), not sending stop command", currentMode)
 		log.Println(msg)
 		util.Broadcast(msg)
@@ -134,7 +205,6 @@ func Debug(update tgbotapi.Update) {
 			util.SendMessage(chatId, "please specify /debug on  or  /debug off", false)
 		}
 	}
-
 }
 
 func ScheduleAdd(update tgbotapi.Update) (schedule model.Schedule) {
@@ -195,5 +265,22 @@ func ScheduleList(update tgbotapi.Update) {
 			msg = fmt.Sprintf("%s%s: %d hours\n", msg, chargeSchedule.StartTime.Format("2006-01-02T15:04Z07:00"), int(chargeSchedule.ChargeDuration.Hours()))
 		}
 		util.SendMessage(chatId, msg, false)
+	}
+}
+
+func SetMaxCurrentLow(update tgbotapi.Update) {
+	SetMaxCurrent(update, conf.InstallationMaxCurrentLow)
+}
+
+func SetMaxCurrentHigh(update tgbotapi.Update) {
+	SetMaxCurrent(update, conf.InstallationMaxCurrentHigh)
+}
+
+func SetMaxCurrent(update tgbotapi.Update, maxCurrent int) {
+	err := InstallationSetMaxCurrent(maxCurrent)
+	if err != nil {
+		util.SendMessage(update.Message.Chat.ID, fmt.Sprintf("failed to set max current to %d Amps: %s", maxCurrent, err), true)
+	} else {
+		util.SendMessage(update.Message.Chat.ID, fmt.Sprintf("max current set to %d Amps", maxCurrent), true)
 	}
 }
