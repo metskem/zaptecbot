@@ -50,38 +50,47 @@ func IsTokenValid(token string) bool {
 	if token == "" {
 		return false
 	}
-	//fmt.Println("validating token ", token)
-	jwToken, _ := jwt.Parse(token, nil)
-	return jwToken.Valid
+	parser := jwt.NewParser()
+	claims := jwt.RegisteredClaims{}
+	_, _, err := parser.ParseUnverified(token, &claims)
+	if err != nil {
+		return false
+	}
+	if claims.ExpiresAt != nil {
+		return claims.ExpiresAt.After(time.Now())
+	}
+	return false
 }
 
 func GetToken() string {
-	if !IsTokenValid(conf.CachedToken) {
-		transport := http.Transport{IdleConnTimeout: time.Second}
-		client := http.Client{Timeout: time.Duration(conf.HttpTimeout) * time.Second, Transport: &transport}
-		userEscaped := url.QueryEscape(conf.UserName)
-		passwordEscaped := url.QueryEscape(conf.Password)
-		postData := fmt.Sprintf("grant_type=password&username=%s&password=%s", userEscaped, passwordEscaped)
-		resp, err := client.Post(conf.GetTokenUrl, "application/x-www-form-urlencoded", strings.NewReader(postData))
-		if err == nil && resp != nil {
-			defer func() { _ = resp.Body.Close() }()
-			respBody, _ := io.ReadAll(resp.Body)
-			if resp.StatusCode == http.StatusOK {
-				loginResponse := model.LoginResponse{}
-				if err := json.Unmarshal(respBody, &loginResponse); err != nil {
-					log.Printf("failed to decode the login response: %s\n", err)
-				}
-				conf.CachedToken = loginResponse.AccessToken
-				log.Printf("successful login, token will expire in %d hours\n", loginResponse.ExpiresIn/3600)
-				return loginResponse.AccessToken
-			} else {
-				log.Printf("response (%d) from login failed:%s\n", resp.StatusCode, respBody)
-				Broadcast(fmt.Sprintf("response (%d) from login failed:%s\n", resp.StatusCode, respBody))
+	if IsTokenValid(conf.CachedToken) {
+		return conf.CachedToken
+	}
+	transport := http.Transport{IdleConnTimeout: time.Second}
+	client := http.Client{Timeout: time.Duration(conf.HttpTimeout) * time.Second, Transport: &transport}
+	userEscaped := url.QueryEscape(conf.UserName)
+	passwordEscaped := url.QueryEscape(conf.Password)
+	postData := fmt.Sprintf("grant_type=password&username=%s&password=%s", userEscaped, passwordEscaped)
+	resp, err := client.Post(conf.GetTokenUrl, "application/x-www-form-urlencoded", strings.NewReader(postData))
+	if err == nil && resp != nil {
+		defer func() { _ = resp.Body.Close() }()
+		respBody, _ := io.ReadAll(resp.Body)
+		if resp.StatusCode == http.StatusOK {
+			loginResponse := model.LoginResponse{}
+			if err := json.Unmarshal(respBody, &loginResponse); err != nil {
+				log.Printf("failed to decode the login response: %s\n", err)
+				return ""
 			}
+			conf.CachedToken = loginResponse.AccessToken
+			log.Printf("successful login, token will expire in %d hours\n", loginResponse.ExpiresIn/3600)
+			return loginResponse.AccessToken
 		} else {
-			log.Printf("response from login failed:%s\n", err)
-			Broadcast(fmt.Sprintf("response from login failed:%s\n", err))
+			log.Printf("response (%d) from login failed:%s\n", resp.StatusCode, respBody)
+			Broadcast(fmt.Sprintf("response (%d) from login failed:%s\n", resp.StatusCode, respBody))
 		}
+	} else {
+		log.Printf("response from login failed:%s\n", err)
+		Broadcast(fmt.Sprintf("response from login failed:%s\n", err))
 	}
 	return ""
 }
@@ -112,6 +121,8 @@ func ParseChargerState(rawStates model.ChargerStatesRaw) model.ChargerState {
 			chargerState.CurrentPhase3 = rawState.ValueAsString
 		case 510:
 			chargerState.ChargerMaxCurrent = rawState.ValueAsString
+		case 513:
+			chargerState.TotalChargePower = rawState.ValueAsString
 		case 548:
 			chargerState.PhaseRotation = rawState.ValueAsString
 		case 702:

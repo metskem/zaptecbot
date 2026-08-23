@@ -12,61 +12,42 @@ type LoginResponse struct {
 }
 
 type InstallationDetails struct {
-	ID                                         string  `json:"Id"`
-	Name                                       string  `json:"Name"`
-	Address                                    string  `json:"Address"`
-	ZipCode                                    string  `json:"ZipCode"`
-	City                                       string  `json:"City"`
-	CountryID                                  string  `json:"CountryId"`
-	InstallationType                           int     `json:"InstallationType"`
-	MaxCurrent                                 int     `json:"MaxCurrent"`
-	AvailableCurrent                           int     `json:"AvailableCurrent"`
-	AvailableCurrentPhase1                     int     `json:"AvailableCurrentPhase1"`
-	AvailableCurrentPhase2                     int     `json:"AvailableCurrentPhase2"`
-	AvailableCurrentPhase3                     int     `json:"AvailableCurrentPhase3"`
-	AvailableCurrentMode                       int     `json:"AvailableCurrentMode"`
-	AvailableCurrentScheduleWeekendActive      bool    `json:"AvailableCurrentScheduleWeekendActive"`
-	DefaultThreeToOneSwitchCurrent             int     `json:"DefaultThreeToOneSwitchCurrent"`
-	InstallationCategoryID                     string  `json:"InstallationCategoryId"`
-	InstallationCategory                       string  `json:"InstallationCategory"`
-	UseLoadBalancing                           bool    `json:"UseLoadBalancing"`
-	IsRequiredAuthentication                   bool    `json:"IsRequiredAuthentication"`
-	Latitude                                   float64 `json:"Latitude"`
-	Longitude                                  float64 `json:"Longitude"`
-	Active                                     bool    `json:"Active"`
-	NetworkType                                int     `json:"NetworkType"`
-	AvailableInternetAccessPLC                 bool    `json:"AvailableInternetAccessPLC"`
-	AvailableInternetAccessWiFi                bool    `json:"AvailableInternetAccessWiFi"`
-	CreatedOnDate                              string  `json:"CreatedOnDate"`
-	UpdatedOn                                  string  `json:"UpdatedOn"`
-	CurrentUserRoles                           int     `json:"CurrentUserRoles"`
-	AuthenticationType                         int     `json:"AuthenticationType"`
-	MessagingEnabled                           bool    `json:"MessagingEnabled"`
-	RoutingID                                  string  `json:"RoutingId"`
-	OcppCloudURLVersion                        int     `json:"OcppCloudUrlVersion"`
-	TimeZoneName                               string  `json:"TimeZoneName"`
-	TimeZoneIanaName                           string  `json:"TimeZoneIanaName"`
-	IsSubscriptionsAvailableForCurrentUser     bool    `json:"IsSubscriptionsAvailableForCurrentUser"`
-	AvailableFeatures                          int     `json:"AvailableFeatures"`
-	EnabledFeatures                            int     `json:"EnabledFeatures"`
-	ActiveChargerCount                         int     `json:"ActiveChargerCount"`
-	FeaturePowerManagementEcoModeDepartureTime int     `json:"Feature_PowerManagement_EcoMode_DepartureTime"`
-	FeaturePowerManagementEcoModeMinEnergy     int     `json:"Feature_PowerManagement_EcoMode_MinEnergy"`
-	FeaturePowerManagementEcoModeDeliveryArea  int     `json:"Feature_PowerManagement_EcoMode_DeliveryArea"`
-	PropertyIsMinimumPowerOfflineMode          bool    `json:"PropertyIsMinimumPowerOfflineMode"`
-	PropertyOfflineModeAllowAnonymous          bool    `json:"PropertyOfflineModeAllowAnonymous"`
-	PropertyEnergySensorRippleEnabled          bool    `json:"PropertyEnergySensorRippleEnabled"`
-	PropertyEnergySensorRippleNumBits          int     `json:"PropertyEnergySensorRippleNumBits"`
-	Tic                                        struct {
-		Enabled bool `json:"Enabled"`
-	} `json:"Tic"`
-	SurplusMode struct {
-		Active   bool `json:"Active"`
-		Strategy int  `json:"Strategy"`
-	} `json:"SurplusMode"`
-	PropertyFirmwareAutomaticUpdates    bool `json:"PropertyFirmwareAutomaticUpdates"`
-	PropertyMaxSinglePhaseChargeCurrent int  `json:"PropertyMaxSinglePhaseChargeCurrent"`
-	PropertySessionMaxStopCount         int  `json:"PropertySessionMaxStopCount"`
+	Pages      int `json:"Pages"`
+	TotalCount int `json:"TotalCount"`
+	Data       []struct {
+		ID                                     string  `json:"Id"`
+		Name                                   string  `json:"Name"`
+		Address                                string  `json:"Address"`
+		ZipCode                                string  `json:"ZipCode"`
+		City                                   string  `json:"City"`
+		CountryID                              string  `json:"CountryId"`
+		InstallationType                       int     `json:"InstallationType"`
+		MaxCurrent                             float32 `json:"MaxCurrent"`
+		AvailableCurrentMode                   int     `json:"AvailableCurrentMode"`
+		AvailableCurrentScheduleWeekendActive  bool    `json:"AvailableCurrentScheduleWeekendActive"`
+		DefaultThreeToOneSwitchCurrent         float32 `json:"DefaultThreeToOneSwitchCurrent"`
+		InstallationCategoryID                 string  `json:"InstallationCategoryId"`
+		InstallationCategory                   string  `json:"InstallationCategory"`
+		UseLoadBalancing                       bool    `json:"UseLoadBalancing"`
+		IsRequiredAuthentication               bool    `json:"IsRequiredAuthentication"`
+		Latitude                               float64 `json:"Latitude"`
+		Longitude                              float64 `json:"Longitude"`
+		Active                                 bool    `json:"Active"`
+		NetworkType                            int     `json:"NetworkType"`
+		AvailableInternetAccessPLC             bool    `json:"AvailableInternetAccessPLC"`
+		AvailableInternetAccessWiFi            bool    `json:"AvailableInternetAccessWiFi"`
+		CreatedOnDate                          string  `json:"CreatedOnDate"`
+		UpdatedOn                              string  `json:"UpdatedOn"`
+		CurrentUserRoles                       int     `json:"CurrentUserRoles"`
+		AuthenticationType                     int     `json:"AuthenticationType"`
+		MessagingEnabled                       bool    `json:"MessagingEnabled"`
+		RoutingID                              string  `json:"RoutingId"`
+		OcppCloudURLVersion                    int     `json:"OcppCloudUrlVersion"`
+		IsSubscriptionsAvailableForCurrentUser bool    `json:"IsSubscriptionsAvailableForCurrentUser"`
+		AvailableFeatures                      int     `json:"AvailableFeatures"`
+		EnabledFeatures                        int     `json:"EnabledFeatures"`
+		PropertyFirmwareAutomaticUpdates       bool    `json:"PropertyFirmwareAutomaticUpdates"`
+	} `json:"Data"`
 }
 
 type ChargerStatesRaw []ChargerStateRaw
@@ -114,7 +95,10 @@ func (state ChargerState) String() string {
 }
 
 func (detail InstallationDetails) String() string {
-	return fmt.Sprintf("Active: %t\nMaxCurrent:%d\nAvailableCurrent:%d", detail.Active, detail.MaxCurrent, detail.AvailableCurrent)
+	if len(detail.Data) == 0 {
+		return "no installation data available"
+	}
+	return fmt.Sprintf("Active: %t\nMaxCurrent:%4.1f", detail.Data[0].Active, detail.Data[0].MaxCurrent)
 }
 
 type Schedule struct {

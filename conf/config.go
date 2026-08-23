@@ -34,7 +34,7 @@ var (
 	HttpTimeout                = 15
 	GetTokenUrl                = "https://api.zaptec.com/oauth/token"
 	ChargerStateUrl            = "https://api.zaptec.com/api/chargers/%s/state"
-	InstallationDetailsUrl     = "https://api.zaptec.com/api/installation/%s"
+	InstallationDetailsUrl     = "https://api.zaptec.com/api/installation"
 	StopStartChargingUrl       = "https://api.zaptec.com/api/chargers/%s/sendCommand/%d"
 	InstallationUpdateUrl      = "https://api.zaptec.com/api/installation/%s/update"
 	CachedToken                string

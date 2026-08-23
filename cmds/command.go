@@ -54,7 +54,7 @@ func InstallationDetails() (model.InstallationDetails, error) {
 	}
 	transport := http.Transport{IdleConnTimeout: time.Second}
 	client := http.Client{Timeout: time.Duration(conf.HttpTimeout) * time.Second, Transport: &transport}
-	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf(conf.InstallationDetailsUrl, conf.ChargerId), nil)
+	req, err := http.NewRequest(http.MethodGet, conf.InstallationDetailsUrl, nil)
 	if err != nil {
 		return model.InstallationDetails{}, fmt.Errorf("failed to create http request: %s", err)
 	}
@@ -71,13 +71,13 @@ func InstallationDetails() (model.InstallationDetails, error) {
 			if err := json.Unmarshal(respBody, &detailsResponse); err != nil {
 				return model.InstallationDetails{}, fmt.Errorf("failed to decode the installation details response: %s", err)
 			}
+			return detailsResponse, nil
 		}
 		return model.InstallationDetails{}, fmt.Errorf("response (%d) from installation details failed: %s", resp.StatusCode, respBody)
 	}
 	return model.InstallationDetails{}, fmt.Errorf("response from installation details was nil")
 }
 
-// TODO er moet nog een TG command voor komen die dit aanroept, iets van /setmaxcurrentHigh /setmaxcurrentLow
 func InstallationSetMaxCurrent(maxCurrent int) error {
 	jwToken := util.GetToken()
 	if jwToken == "" {
@@ -87,11 +87,14 @@ func InstallationSetMaxCurrent(maxCurrent int) error {
 	if err != nil {
 		return fmt.Errorf("failed to get charger details: %s", err)
 	}
+	if len(installationDetails.Data) == 0 {
+		return fmt.Errorf("no installation data available")
+	}
 
 	transport := http.Transport{IdleConnTimeout: time.Second}
 	client := http.Client{Timeout: time.Duration(conf.HttpTimeout) * time.Second, Transport: &transport}
 	body := strings.NewReader(fmt.Sprintf(`{"maxCurrent":%d,"availableCurrent":%d}`, maxCurrent, maxCurrent))
-	req, err := http.NewRequest(http.MethodPost, fmt.Sprintf(conf.InstallationUpdateUrl, installationDetails.ID), body)
+	req, err := http.NewRequest(http.MethodPost, fmt.Sprintf(conf.InstallationUpdateUrl, installationDetails.Data[0].ID), body)
 	if err != nil {
 		return fmt.Errorf("failed to create http request: %s", err)
 	}
@@ -124,7 +127,7 @@ func ShowState(update tgbotapi.Update) {
 		util.Broadcast(err.Error())
 		return
 	}
-	util.SendMessage(update.Message.Chat.ID, fmt.Sprintf("%s%s", chargerState, chargerDetails), false)
+	util.SendMessage(update.Message.Chat.ID, fmt.Sprintf("%s\n%s", chargerState, chargerDetails), false)
 }
 
 func StartStopCharger(cmd string) {
@@ -174,9 +177,8 @@ func StartStopCharger(cmd string) {
 				resp, err := client.Do(req)
 				if err == nil && resp != nil {
 					respBody, _ := io.ReadAll(resp.Body)
-					defer func() { _ = resp.Body.Close() }()
+					_ = resp.Body.Close()
 					if resp.StatusCode == http.StatusOK {
-						_ = resp.Body.Close()
 						log.Printf("%s charger succeeded", cmd)
 						return
 					}
