@@ -36,7 +36,7 @@ func main() {
 	meDetails := "unknown"
 	if err == nil {
 		meDetails = fmt.Sprintf("BOT: ID:%d UserName:%s FirstName:%s LastName:%s", conf.Me.ID, conf.Me.UserName, conf.Me.FirstName, conf.Me.LastName)
-		log.Printf("Bot started: %s, buildtime:%s, commit hash:%s", meDetails, conf.BuildTime, conf.CommitHash)
+		log.Printf("Bot started: %s, build time:%s, commit hash:%s", meDetails, conf.BuildTime, conf.CommitHash)
 		log.Printf("Configured chat ids: %v", conf.ChatIDs)
 	} else {
 		log.Printf("Bot.GetMe() failed: %v", err)

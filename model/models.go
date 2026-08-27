@@ -84,9 +84,9 @@ type ChargerState struct {
 var (
 	ChargerOperationModeUnknown             = "Unknown"
 	ChargerOperationModeDisconnected        = "Disconnected"
-	ChargeroperationmodeconnectedRequesting = "Connected_Requesting"
-	ChargeroperationmodeconnectedCharging   = "Connected_Charging"
-	ChargeroperationmodeconnectedFinished   = "Connected_Finished"
+	ChargerOperationModeConnectedRequesting = "Connected_Requesting"
+	ChargerOperationModeConnectedCharging   = "Connected_Charging"
+	ChargerOperationModeConnectedFinished   = "Connected_Finished"
 )
 
 func (state ChargerState) String() string {
@@ -98,7 +98,7 @@ func (detail InstallationDetails) String() string {
 	if len(detail.Data) == 0 {
 		return "no installation data available"
 	}
-	return fmt.Sprintf("Active: %t\nMaxCurrent:%4.1f", detail.Data[0].Active, detail.Data[0].MaxCurrent)
+	return fmt.Sprintf("Installation Active: %t\nInstallation MaxCurrent:%4.1f", detail.Data[0].Active, detail.Data[0].MaxCurrent)
 }
 
 type Schedule struct {

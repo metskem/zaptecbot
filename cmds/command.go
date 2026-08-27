@@ -150,13 +150,13 @@ func StartStopCharger(cmd string) {
 	currentMode := chargerState.ChargerOperationMode
 	log.Printf("charger current operation mode: %s (requested command: %s)", currentMode, cmd)
 
-	if cmd == "start" && currentMode == model.ChargeroperationmodeconnectedCharging {
-		msg := fmt.Sprintf("charger is already in %s mode, not sending start command", currentMode)
+	if cmd == "start" && (currentMode == model.ChargerOperationModeConnectedCharging || currentMode == model.ChargerOperationModeDisconnected) {
+		msg := fmt.Sprintf("charger is in %s mode, not sending start command", currentMode)
 		log.Println(msg)
 		util.Broadcast(msg)
 		return
 	}
-	if cmd == "stop" && currentMode != model.ChargeroperationmodeconnectedCharging {
+	if cmd == "stop" && currentMode != model.ChargerOperationModeConnectedCharging {
 		msg := fmt.Sprintf("charger is in %s mode (not charging), not sending stop command", currentMode)
 		log.Println(msg)
 		util.Broadcast(msg)
