@@ -12,8 +12,9 @@ import (
 )
 
 const (
-	SchedulePattern1 = "^/s[ad] \\d{2}:\\d{2} \\d{1,2}.*"                          // /s[ad] 12:34 5
-	SchedulePattern2 = "^/s[ad] \\d{4}\\-\\d{2}\\-\\d{2} \\d{2}:\\d{2} \\d{1,2}.*" // /s[ad] 2021-01-01 12:34 5
+	SchedulePattern1  = "^/s[ad] \\d{2}:\\d{2} \\d{1,2}.*" // /s[ad] 12:34 5
+	MaxCurrentPattern = "^/smc ([6-9]|1[0-6])$"
+	SchedulePattern2  = "^/s[ad] \\d{4}\\-\\d{2}\\-\\d{2} \\d{2}:\\d{2} \\d{1,2}.*" // /s[ad] 2021-01-01 12:34 5
 )
 
 var (
@@ -29,18 +30,16 @@ var (
 	ChatIDs    = make(map[int]int64)
 	Debug      bool
 
-	Me                         tgbotapi.User
-	Bot                        *tgbotapi.BotAPI
-	HttpTimeout                = 15
-	GetTokenUrl                = "https://api.zaptec.com/oauth/token"
-	ChargerStateUrl            = "https://api.zaptec.com/api/chargers/%s/state"
-	InstallationDetailsUrl     = "https://api.zaptec.com/api/installation"
-	StopStartChargingUrl       = "https://api.zaptec.com/api/chargers/%s/sendCommand/%d"
-	InstallationUpdateUrl      = "https://api.zaptec.com/api/installation/%s/update"
-	CachedToken                string
-	ChargeSchedules            = make(map[string]model.Schedule) // key is the schedule time+ duration, i.e.: "12:34 5"
-	InstallationMaxCurrentLow  = 6
-	InstallationMaxCurrentHigh = 16
+	Me                     tgbotapi.User
+	Bot                    *tgbotapi.BotAPI
+	HttpTimeout            = 15
+	GetTokenUrl            = "https://api.zaptec.com/oauth/token"
+	ChargerStateUrl        = "https://api.zaptec.com/api/chargers/%s/state"
+	InstallationDetailsUrl = "https://api.zaptec.com/api/installation"
+	StopStartChargingUrl   = "https://api.zaptec.com/api/chargers/%s/sendCommand/%d"
+	InstallationUpdateUrl  = "https://api.zaptec.com/api/installation/%s/update"
+	CachedToken            string
+	ChargeSchedules        = make(map[string]model.Schedule) // key is the schedule time+ duration, i.e.: "12:34 5"
 )
 
 func EnvironmentComplete() {
@@ -70,7 +69,7 @@ func EnvironmentComplete() {
 
 	chatIDsString := strings.Split(ChatIDsStr, ",")
 	var chatids string
-	for i := 0; i < len(chatIDsString); i++ {
+	for i := range chatIDsString {
 		ChatIDs[i], _ = strconv.ParseInt(chatIDsString[i], 0, 64)
 		chatids = fmt.Sprintf("%s %d", chatids, ChatIDs[i])
 	}

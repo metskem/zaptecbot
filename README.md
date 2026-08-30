@@ -29,8 +29,7 @@ debug - [on|off] - dynamically turn Telegram Bot debugging on/off
 sl - (Schedule List) list the current schedules
 sa - (Schedule Add) HH:mm n - Add a schedule, H=Hours, m=minutes, n=duration in hours. When the given time is before current time, we add one day (assuming you wanted that time for tomorrow)
 sd - (Schedule Delete) HH:mm n - Delete a schedule, H=Hours, m=minutes, n=duration in hours. 
-smcl - (Set Max Current Low) - Set the installation max current to low (6A)
-smch - (Set Max Current High) - Set the installation max current to high (16A)
+smc - (Set Max Current) - Set the installation max current. First parameter is the amperage (6-16)
 ``` 
 
 ### Testing

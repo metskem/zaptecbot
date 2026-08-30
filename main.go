@@ -161,11 +161,7 @@ func HandleCommand(update tgbotapi.Update) {
 		cmds.ScheduleList(update)
 	}
 
-	if strings.HasPrefix(update.Message.Text, "/smcl") {
-		cmds.SetMaxCurrentLow(update)
-	}
-
-	if strings.HasPrefix(update.Message.Text, "/smch") {
-		cmds.SetMaxCurrentHigh(update)
+	if strings.HasPrefix(update.Message.Text, "/smc") {
+		cmds.SetMaxCurrent(update)
 	}
 }

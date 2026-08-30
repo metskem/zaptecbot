@@ -7,6 +7,8 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"regexp"
+	"strconv"
 	"strings"
 	"time"
 
@@ -270,19 +272,19 @@ func ScheduleList(update tgbotapi.Update) {
 	}
 }
 
-func SetMaxCurrentLow(update tgbotapi.Update) {
-	SetMaxCurrent(update, conf.InstallationMaxCurrentLow)
-}
-
-func SetMaxCurrentHigh(update tgbotapi.Update) {
-	SetMaxCurrent(update, conf.InstallationMaxCurrentHigh)
-}
-
-func SetMaxCurrent(update tgbotapi.Update, maxCurrent int) {
-	err := InstallationSetMaxCurrent(maxCurrent)
+func SetMaxCurrent(update tgbotapi.Update) {
+	maxCurrentRegex := regexp.MustCompile(conf.MaxCurrentPattern)
+	if !maxCurrentRegex.MatchString(update.Message.Text) {
+		util.SendMessage(update.Message.Chat.ID, fmt.Sprintf("failed to parse max current request %s, please use /smc <number> (6..16)", update.Message.Text), true)
+		return
+	}
+	words := strings.Split(update.Message.Text, " ")
+	maxCurrentStr := words[1]
+	maxCurrentInt, _ := strconv.Atoi(maxCurrentStr)
+	err := InstallationSetMaxCurrent(maxCurrentInt)
 	if err != nil {
-		util.SendMessage(update.Message.Chat.ID, fmt.Sprintf("failed to set max current to %d Amps: %s", maxCurrent, err), true)
+		util.SendMessage(update.Message.Chat.ID, fmt.Sprintf("failed to set max current to %d Amps: %s", maxCurrentInt, err), true)
 	} else {
-		util.SendMessage(update.Message.Chat.ID, fmt.Sprintf("max current set to %d Amps", maxCurrent), true)
+		util.SendMessage(update.Message.Chat.ID, fmt.Sprintf("max current set to %d Amps", maxCurrentInt), true)
 	}
 }
